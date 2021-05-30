@@ -1,7 +1,7 @@
 {
   "name": "carmax168",
-  "homepage": "https://www.carmax168.com",
   "version": "0.1.0",
+  "homepage": "https://www.carmax168.com",
   "private": true,
   "dependencies": {
     "@testing-library/jest-dom": "^5.12.0",
