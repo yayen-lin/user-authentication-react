@@ -1,5 +1,6 @@
 # carmax168
-Jason's company web app [click me to go to carmax168 🚀🚀](https://www.max168.com)
+Jason's company web app.
+- [click me to go to carmax168 🚀🚀](https://www.carmax168.com)
 
 # Getting Started with Create React App
 
