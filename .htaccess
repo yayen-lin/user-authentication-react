@@ -1,6 +1,3 @@
-# DirectoryIndex index.html index.php index.shtml
-# DirectoryIndex index.js index.html
-# DirectoryIndex src/index.js src/index.html
 DirectoryIndex index.html
 
 <IfModule mod_rewrite.c>
