@@ -1,9 +1,6 @@
 # npm modules
 node_modules
 
-# vs code
-.vscode/
-
 # mac
 .DS_Store
 
