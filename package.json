@@ -1,0 +1,24 @@
+{
+  "name": "carmax168",
+  "version": "1.0.0",
+  "description": "Jason's company web app. - [click me to go to carmax168 🚀🚀](https://www.carmax168.com)",
+  "main": "index.js",
+  "scripts": {
+    "start": "node server.js",
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/yayen-lin/carmax168.git"
+  },
+  "keywords": [],
+  "author": "",
+  "license": "ISC",
+  "bugs": {
+    "url": "https://github.com/yayen-lin/carmax168/issues"
+  },
+  "homepage": "https://github.com/yayen-lin/carmax168#readme",
+  "dependencies": {
+    "express": "^4.17.1"
+  }
+}
