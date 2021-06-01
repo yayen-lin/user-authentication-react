@@ -2,7 +2,7 @@
   "name": "carmax168",
   "version": "1.0.0",
   "description": "Jason's company web app. - [click me to go to carmax168 🚀🚀](https://www.carmax168.com)",
-  "main": "index.js",
+  "main": "server.js",
   "engines": {
   "node": "14.16.0"
   },
