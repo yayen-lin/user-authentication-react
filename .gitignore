@@ -1,5 +1,7 @@
-# npm modules
+# npm dependencies
 node_modules
+
+.env
 
 # mac
 .DS_Store
