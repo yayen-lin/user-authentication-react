@@ -1,3 +1,4 @@
+// requires dependencies
 const path = require("path");
 const express = require("express");
 const app = express();
@@ -11,11 +12,24 @@ console.log("PORT=", process.env.PORT || "undefined");
 app.use(express.static(path.resolve(__dirname, "../client/build")));
 
 const db = mysql.createPool({
-  host: "162.241.253.180",
-  user: "ggdabhmy",
+  host: "taipeinerd.com",
+  user: "ggdabhmy_admin",
   password: process.env.DB_PASSWORD,
   database: "ggdabhmy_sampledb",
   connectionLimit: 5,
+});
+
+// app.get("/", (req, res) => {
+//   res.send("Hello World!");
+// });
+
+app.get("/", (req, res) => {
+  const sqlInsert =
+    "INSERT INTO movieReviews (movieName, movieReview) VALUES ('inception', 'good movie')";
+
+  db.query(sqlInsert, (err, result) => {
+    res.send("Done inserting!");
+  });
 });
 
 app.get("/api", (req, res) => {
