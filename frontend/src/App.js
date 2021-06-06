@@ -23,6 +23,15 @@ function App() {
     </div>
   );
 
+  const submitReview = () => {
+    Axios.post("http://localhost:3001/api/insert", {
+      movieName: movie,
+      movieReview: review,
+    }).then(() => {
+      alert("Insert Successfully!");
+    });
+  };
+
   return (
     <div className="App">
       <h1>CRUD Practice</h1>
@@ -44,7 +53,7 @@ function App() {
           }}
         />
 
-        <button>Submit</button>
+        <button onClick={submitReview}>Submit</button>
       </div>
     </div>
   );
