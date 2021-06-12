@@ -45,13 +45,6 @@ class App extends Component {
           <div>
             <Navigation />
             <Switch id="body">
-              <Route
-                exact
-                path="/"
-                render={() => {
-                  <Redirect to="/home" />;
-                }}
-              />
               <Route exact path="/home">
                 <Home />
               </Route>
@@ -70,6 +63,12 @@ class App extends Component {
               <Route exact path="/contact">
                 <Contact />
               </Route>
+
+              {/* Redirect to home page */}
+              <Route exact path="/">
+                <Redirect to="/home" />
+              </Route>
+              {/* 404 Not Found */}
               <Route path="*">
                 <div>404 Not Found</div>
               </Route>
