@@ -13,11 +13,19 @@ import "./App.css";
 
 import Container from "react-bootstrap/Container";
 
-import Home from "./components/Home";
-import Help from "./components/Help";
-import About from "./components/About";
-import Contact from "./components/Contact";
-import Navigation from "./components/Navigation";
+// auth
+import Login from "./components/auth/Login";
+
+// admin
+import Profile from "./components/admin/Profile";
+
+// guest views
+import Home from "./components/guestView/Home";
+import Help from "./components/guestView/Help";
+import About from "./components/guestView/About";
+import Contact from "./components/guestView/Contact";
+import GuestForm from "./components/guestView/GuestForm";
+import Navigation from "./components/guestView/Navigation";
 
 class App extends Component {
   constructor(props) {
@@ -28,7 +36,8 @@ class App extends Component {
   }
 
   // note:
-  // https://www.pluralsight.com/guides/how-to-set-react-router-default-route-redirect-to-home
+  // 1. [Router, Switch, Route, Redirect]
+  //    https://www.pluralsight.com/guides/how-to-set-react-router-default-route-redirect-to-home
   render() {
     return (
       <div>
@@ -49,8 +58,14 @@ class App extends Component {
               <Route exact path="/help">
                 <Help />
               </Route>
+              <Route exact path="/form">
+                <GuestForm />
+              </Route>
               <Route exact path="/about">
                 <About />
+              </Route>
+              <Route exact path="/login">
+                <Login />
               </Route>
               <Route exact path="/contact">
                 <Contact />
