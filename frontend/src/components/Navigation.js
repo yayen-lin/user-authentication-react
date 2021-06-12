@@ -27,7 +27,7 @@ class Navigation extends Component {
     super(props);
     this.state = {
       navbarAdmin: ["Home", "About", "Contact", "Profile", "Help", "Logout"],
-      navbarUser: ["Home", "About", "Contact", "Profile", "Help", "Login"],
+      navbarUser: ["Home", "About", "Contact", "Help", "Login"],
     };
   }
 
@@ -49,7 +49,7 @@ class Navigation extends Component {
             <FiLogIn size="0.9rem" />
           </>
         );
-      case "Signup":
+      case "Profile":
         return (
           <>
             <FiUserPlus size="0.9rem" />
@@ -91,17 +91,19 @@ class Navigation extends Component {
   getRoute(content) {
     switch (content) {
       case "Logout":
-        return "/logout"; // will be redirected to '/' upon successful logout
+        return "/logout";
       case "Login":
         return "/login";
       case "Help":
         return "/help";
       case "Home":
-        return "/home/" + this.props.pantry_id;
+        return "/home";
       case "About":
         return "/about";
       case "Contact":
         return "/contact";
+      case "Profile":
+        return "/profile";
       default:
         return "/";
     }
@@ -114,7 +116,6 @@ class Navigation extends Component {
    *   and corresponding icon.
    */
   renderRoute(navbarContent) {
-    // console.log(navbarContent);
     return navbarContent.map((content) =>
       content === "Logout" ? (
         <LinkContainer
@@ -156,12 +157,7 @@ class Navigation extends Component {
           </LinkContainer>
           <Navbar.Toggle aria-controls="responsive-navbar-nav" />
           <Navbar.Collapse id="responsive-navbar-nav">
-            <Nav className="mr-auto">
-              {/* <LinkContainer to="/menu">
-                <Nav.Link>Menu</Nav.Link>
-              </LinkContainer> */}
-            </Nav>
-            <Nav>{this.renderRoute(navbarContent)}</Nav>
+            <Nav className="mr-auto">{this.renderRoute(navbarContent)}</Nav>
           </Navbar.Collapse>
         </Container>
       </Navbar>
