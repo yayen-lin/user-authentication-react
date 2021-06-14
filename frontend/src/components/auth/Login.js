@@ -21,26 +21,56 @@ class Login extends Component {
     super(props);
     this.state = {
       dummy_data: "abc",
-      username: "",
-      password: "",
+      usernameLogin: "",
+      passwordLogin: "",
+      usernameReg: "",
+      passwordReg: "",
     };
   }
 
-  onChangeSetUsername(un) {
-    this.setState({ username: un });
+  onChangeSetUsernameLogin(un) {
+    this.setState({ usernameLogin: un });
   }
 
-  onChangeSetPassword(pw) {
-    this.setState({ password: pw });
+  onChangeSetPasswordLogin(pw) {
+    this.setState({ passwordLogin: pw });
+  }
+
+  onChangeSetUsernameReg(un) {
+    this.setState({ usernameReg: un });
+  }
+
+  onChangeSetPasswordReg(pw) {
+    this.setState({ passwordReg: pw });
   }
 
   onHandleSubmit(e) {
     e.preventDefault();
-    console.log(this.state.username);
-    console.log(this.state.password);
+    console.log(this.state.usernameLogin);
+    console.log(this.state.passwordLogin);
+
+    // clear form after submit
     this.setState({
-      username: "",
-      password: "",
+      usernameLogin: "",
+      passwordLogin: "",
+    });
+  }
+
+  onHandleRegister(e) {
+    e.preventDefault();
+
+    Axios.post("http://localhost:3001/register", {
+      username: this.state.usernameReg,
+      password: this.state.passwordReg,
+      privilege: 0, // by default, user privilege is set to one
+    }).then((response) => {
+      console.log(response);
+    });
+
+    // clear form after submit
+    this.setState({
+      usernameReg: "",
+      passwordReg: "",
     });
   }
 
@@ -57,11 +87,11 @@ class Login extends Component {
               </InputGroup.Prepend>
               <FormControl
                 required
-                id="username-form"
+                id="username-login-form"
                 type="text"
-                value={this.state.username}
+                value={this.state.usernameLogin}
                 placeholder="Username"
-                onChange={(e) => this.onChangeSetUsername(e.target.value)}
+                onChange={(e) => this.onChangeSetUsernameLogin(e.target.value)}
               />
             </InputGroup>
           </Col>
@@ -79,11 +109,11 @@ class Login extends Component {
               </InputGroup.Prepend>
               <FormControl
                 required
-                id="form-password"
+                id="password-login-form"
                 type="password"
-                value={this.state.password}
+                value={this.state.passwordLogin}
                 placeholder="Password"
-                onChange={(e) => this.onChangeSetPassword(e.target.value)}
+                onChange={(e) => this.onChangeSetPasswordLogin(e.target.value)}
               />
             </InputGroup>
           </Col>
@@ -128,11 +158,11 @@ class Login extends Component {
               </InputGroup.Prepend>
               <FormControl
                 required
-                id="username-form"
+                id="username-reg-form"
                 type="text"
-                value={this.state.username}
+                value={this.state.usernameReg}
                 placeholder="Username"
-                onChange={(e) => this.onChangeSetUsername(e.target.value)}
+                onChange={(e) => this.onChangeSetUsernameReg(e.target.value)}
               />
             </InputGroup>
           </Col>
@@ -150,11 +180,11 @@ class Login extends Component {
               </InputGroup.Prepend>
               <FormControl
                 required
-                id="form-password"
+                id="form-reg-password"
                 type="password"
-                value={this.state.password}
+                value={this.state.passwordReg}
                 placeholder="Password"
-                onChange={(e) => this.onChangeSetPassword(e.target.value)}
+                onChange={(e) => this.onChangeSetPasswordReg(e.target.value)}
               />
             </InputGroup>
           </Col>
@@ -164,8 +194,8 @@ class Login extends Component {
         <Button
           variant="dark"
           size="lg"
-          className="mt-3"
-          onClick={(e) => this.onHandleSubmit(e)}
+          className="mt-3 mb-3"
+          onClick={(e) => this.onHandleRegister(e)}
         >
           <FiUserPlus /> Sign Me Up!
         </Button>
@@ -176,7 +206,9 @@ class Login extends Component {
   render() {
     return (
       <Container>
-        {this.getLoginForm()} <hr /> {this.getRegisterForm()}
+        {this.getLoginForm()}
+        <hr />
+        {this.getRegisterForm()}
       </Container>
     );
   }
