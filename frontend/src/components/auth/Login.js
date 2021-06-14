@@ -27,6 +27,16 @@ class Login extends Component {
     this.setState({ password: pw });
   }
 
+  onHandleSubmit(e) {
+    e.preventDefault();
+    console.log(this.state.username);
+    console.log(this.state.password);
+    this.setState({
+      username: "",
+      password: "",
+    });
+  }
+
   getLoginForm() {
     return (
       <Form className="mt-5">
@@ -39,8 +49,10 @@ class Login extends Component {
                 <InputGroup.Text>@</InputGroup.Text>
               </InputGroup.Prepend>
               <FormControl
+                required
                 id="username-form"
                 type="text"
+                value={this.state.username}
                 placeholder="Username"
                 onChange={(e) => this.onChangeSetUsername(e.target.value)}
               />
@@ -59,8 +71,10 @@ class Login extends Component {
                 </InputGroup.Text>
               </InputGroup.Prepend>
               <FormControl
+                required
                 id="form-password"
                 type="password"
+                value={this.state.password}
                 placeholder="Password"
                 onChange={(e) => this.onChangeSetPassword(e.target.value)}
               />
@@ -85,10 +99,7 @@ class Login extends Component {
           variant="dark"
           size="lg"
           className="mt-3"
-          onClick={() => {
-            console.log(this.state.username);
-            console.log(this.state.password);
-          }}
+          onClick={(e) => this.onHandleSubmit(e)}
         >
           <BiLogIn /> Login
         </Button>
