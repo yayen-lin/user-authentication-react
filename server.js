@@ -26,7 +26,7 @@ const db = mysql.createPool({
   host: "taipeinerd.com",
   user: "ggdabhmy_admin",
   password: process.env.DB_PASSWORD,
-  database: "ggdabhmy_sampledb",
+  database: "ggdabhmy_carmax168",
   connectionLimit: 5,
 });
 
@@ -34,26 +34,27 @@ const db = mysql.createPool({
 //   res.send("Hello World!");
 // });
 
-// app.get("/", (req, res) => {
-// const sqlInsert =
-//   "INSERT INTO movieReviews (movieName, movieReview) VALUES ('inception', 'good movie')";
+// app.post("/api/insert", (req, res) => {
+//   const sqlInsert =
+//     "INSERT INTO movieReviews (movieName, movieReview) VALUES (?, ?)";
 
-// db.query(sqlInsert, (err, result) => {
-//   res.send("Done inserting!");
+//   const movieName = req.body.movieName;
+//   const movieReview = req.body.movieReview;
+
+//   db.query(sqlInsert, [movieName, movieReview], (err, result) => {
+//     res.send("Done inserting!");
+//     console.log("Done inserting!");
+//   });
 // });
-// });
 
-app.post("/api/insert", (req, res) => {
-  const sqlInsert =
-    "INSERT INTO movieReviews (movieName, movieReview) VALUES (?, ?)";
-
-  const movieName = req.body.movieName;
-  const movieReview = req.body.movieReview;
-
-  db.query(sqlInsert, [movieName, movieReview], (err, result) => {
-    res.send("Done inserting!");
-    console.log("Done inserting!");
-  });
+app.post("/register", (req, res) => {
+  db.query(
+    "INSERT INTO users (username, password, privilege) VALUES (???, ???, ???)",
+    [username, password, previlege],
+    (err, result) => {
+      console.log(err);
+    }
+  );
 });
 
 app.get("/api", (req, res) => {
