@@ -14,7 +14,17 @@ class Login extends Component {
     super(props);
     this.state = {
       dummy_data: "abc",
+      username: "",
+      password: "",
     };
+  }
+
+  onChangeSetUsername(un) {
+    this.setState({ username: un });
+  }
+
+  onChangeSetPassword(pw) {
+    this.setState({ password: pw });
   }
 
   getLoginForm() {
@@ -32,6 +42,7 @@ class Login extends Component {
                 id="username-form"
                 type="text"
                 placeholder="Username"
+                onChange={(e) => this.onChangeSetUsername(e.target.value)}
               />
             </InputGroup>
           </Col>
@@ -51,6 +62,7 @@ class Login extends Component {
                 id="form-password"
                 type="password"
                 placeholder="Password"
+                onChange={(e) => this.onChangeSetPassword(e.target.value)}
               />
             </InputGroup>
           </Col>
@@ -69,7 +81,15 @@ class Login extends Component {
         </Row>
 
         {/* login btn */}
-        <Button variant="dark" size="lg" className="mt-3">
+        <Button
+          variant="dark"
+          size="lg"
+          className="mt-3"
+          onClick={() => {
+            console.log(this.state.username);
+            console.log(this.state.password);
+          }}
+        >
           <BiLogIn /> Login
         </Button>
       </Form>
