@@ -44,8 +44,15 @@ class Login extends Component {
     this.setState({ passwordReg: pw });
   }
 
-  onHandleSubmit(e) {
+  onHandleLogin(e) {
     e.preventDefault();
+
+    Axios.post("http://localhost:3001/login", {
+      username: this.state.usernameLogin,
+      password: this.state.passwordLogin,
+    }).then((response) => {
+      console.log(response);
+    });
     console.log(this.state.usernameLogin);
     console.log(this.state.passwordLogin);
 
@@ -135,7 +142,7 @@ class Login extends Component {
           variant="dark"
           size="lg"
           className="mt-3"
-          onClick={(e) => this.onHandleSubmit(e)}
+          onClick={(e) => this.onHandleLogin(e)}
         >
           <BiLogIn /> Login!
         </Button>
