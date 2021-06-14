@@ -25,6 +25,7 @@ class Login extends Component {
       passwordLogin: "",
       usernameReg: "",
       passwordReg: "",
+      loginStatus: false,
     };
   }
 
@@ -44,6 +45,10 @@ class Login extends Component {
     this.setState({ passwordReg: pw });
   }
 
+  setLoginStatus(isLoggedIn) {
+    this.setState({ loginStatus: isLoggedIn });
+  }
+
   onHandleLogin(e) {
     e.preventDefault();
 
@@ -51,15 +56,17 @@ class Login extends Component {
       username: this.state.usernameLogin,
       password: this.state.passwordLogin,
     }).then((response) => {
-      console.log(response);
-    });
-    console.log(this.state.usernameLogin);
-    console.log(this.state.passwordLogin);
-
-    // clear form after submit
-    this.setState({
-      usernameLogin: "",
-      passwordLogin: "",
+      if (response.data.message) {
+        console.log(response.data);
+      } else {
+        console.log(response.data);
+        this.setLoginStatus(true);
+        // clear form after submit upon success
+        this.setState({
+          usernameLogin: "",
+          passwordLogin: "",
+        });
+      }
     });
   }
 
@@ -74,7 +81,7 @@ class Login extends Component {
       console.log(response);
     });
 
-    // clear form after submit
+    // clear form after signup btn is clicked
     this.setState({
       usernameReg: "",
       passwordReg: "",
@@ -83,7 +90,7 @@ class Login extends Component {
 
   getLoginForm() {
     return (
-      <Form className="mt-5 mb-5">
+      <Form className="mb-5">
         {/* username */}
         <Row>
           <Col xs="auto">
@@ -152,7 +159,7 @@ class Login extends Component {
 
   getRegisterForm() {
     return (
-      <Form className="mt-5">
+      <Form>
         {/* username */}
         <Row>
           <Col xs="auto">
@@ -213,8 +220,10 @@ class Login extends Component {
   render() {
     return (
       <Container>
+        <h2 className="mt-3">Login</h2>
         {this.getLoginForm()}
         <hr />
+        <h2 className="mt-3">Register</h2>
         {this.getRegisterForm()}
       </Container>
     );

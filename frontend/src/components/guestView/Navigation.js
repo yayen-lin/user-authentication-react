@@ -26,7 +26,7 @@ class Navigation extends Component {
   constructor(props) {
     super(props);
     this.state = {
-      navbarAdmin: ["Home", "About", "Contact", "Profile", "Help", "Logout"],
+      navbarAdmin: ["Home", "About", "Contact", "Profile", "Help", "Logout"], // + manage users, + ?
       navbarUser: ["Home", "About", "Contact", "Help", "Login"],
     };
   }
