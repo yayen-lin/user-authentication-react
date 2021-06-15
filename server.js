@@ -7,6 +7,9 @@ const bodyParser = require("body-parser");
 const cors = require("cors"); // enable cross-origin resource sharing in express
 require("dotenv").config();
 
+const bcrypt = require("bcrypt");
+const saltRounds = 10;
+
 const PORT = process.env.PORT || 3001;
 
 // const corsOptions = {
@@ -53,33 +56,52 @@ app.post("/register", (req, res) => {
   const password = req.body.password;
   const privilege = req.body.privilege;
 
-  db.query(
-    "INSERT INTO users (username, password, privilege) VALUES (?, ?, ?)",
-    [username, password, privilege],
-    (err, result) => {
+  bcrypt.hash(password, saltRounds, (err, hash) => {
+    if (err) {
       console.log(err);
     }
-  );
+    db.query(
+      "INSERT INTO users (username, password, privilege) VALUES (?, ?, ?);",
+      [username, hash, privilege],
+      (err, result) => {
+        console.log(err);
+      }
+    );
+  });
 });
 
 app.post("/login", (req, res) => {
   const username = req.body.username;
   const password = req.body.password;
 
-  db.query(
-    "SELECT * FROM users WHERE username = ? AND password = ?",
-    [username, password],
-    (err, result) => {
-      if (err) {
-        res.send({ err: err });
-      }
-      if (result.length > 0) {
-        res.send(result);
-      } else {
-        res.send({ message: "Wrong username or password!" });
-      }
+  // hash + salt
+  bcrypt.hash(password.saltRounds, (err, hash) => {
+    if (err) {
+      console.log(err);
     }
-  );
+
+    db.query(
+      "SELECT * FROM users WHERE username = ?;",
+      [username],
+      (err, result) => {
+        if (err) {
+          res.send({ err: err });
+        }
+        if (result.length > 0) {
+          bcrypt.compare(password, result[0].password, (error, response) => {
+            if (response) {
+              // login successfully
+              res.send(result);
+            } else {
+              res.send({ message: "Wrong username or password!" });
+            }
+          });
+        } else {
+          res.send({ message: "User doesn't exist!" });
+        }
+      }
+    );
+  });
 });
 
 app.get("/api", (req, res) => {
