@@ -1,4 +1,4 @@
-import React, { Component } from "react";
+import React, { useEffect, useState } from "react";
 
 // connect to our backend
 import Axios from "axios";
@@ -16,79 +16,71 @@ import FormControl from "react-bootstrap/FormControl";
 import { BiKey, BiLogIn } from "react-icons/bi";
 import { FiTag, FiUserPlus, FiLock } from "react-icons/fi";
 
-class Login extends Component {
-  constructor(props) {
-    super(props);
-    this.state = {
-      dummy_data: "abc",
-      usernameLogin: "",
-      passwordLogin: "",
-      usernameReg: "",
-      passwordReg: "",
-      loginStatus: false,
-    };
-  }
+function LoginAndReg(props) {
+  // constructor(props) {
+  //   super(props);
+  //   this.state = {
+  //     dummy_data: "abc",
+  //     usernameLogin: "",
+  //     passwordLogin: "",
+  //     usernameReg: "",
+  //     passwordReg: "",
+  //     loginStatus: false,
+  //   };
+  // }
 
-  onChangeSetUsernameLogin(un) {
-    this.setState({ usernameLogin: un });
-  }
+  const [usernameLogin, setUsernameLogin] = useState("");
+  const [passwordLogin, setPasswordLogin] = useState("");
+  const [usernameReg, setUsernameReg] = useState("");
+  const [passwordReg, setPasswordReg] = useState("");
+  const [loginStatus, setLoginStatus] = useState("");
 
-  onChangeSetPasswordLogin(pw) {
-    this.setState({ passwordLogin: pw });
-  }
+  Axios.defaults.withCredentials = true;
 
-  onChangeSetUsernameReg(un) {
-    this.setState({ usernameReg: un });
-  }
+  useEffect(() => {
+    Axios.get("http://localhost:3001/login").then((response) => {
+      if (response.data.loggedIn == true) {
+        setLoginStatus(response.data.user[0].username);
+      }
+    });
+  }, []);
 
-  onChangeSetPasswordReg(pw) {
-    this.setState({ passwordReg: pw });
-  }
-
-  setLoginStatus(isLoggedIn) {
-    this.setState({ loginStatus: isLoggedIn });
-  }
-
-  onHandleLogin(e) {
+  const onHandleLogin = (e) => {
     e.preventDefault();
 
     Axios.post("http://localhost:3001/login", {
-      username: this.state.usernameLogin,
-      password: this.state.passwordLogin,
+      username: usernameLogin,
+      password: passwordLogin,
     }).then((response) => {
       if (response.data.message) {
         console.log(response.data);
       } else {
         console.log(response.data);
-        this.setLoginStatus(true);
+        setLoginStatus(true);
         // clear form after submit upon success
-        this.setState({
-          usernameLogin: "",
-          passwordLogin: "",
-        });
+        setUsernameLogin("");
+        setPasswordLogin("");
       }
     });
-  }
+  };
 
-  onHandleRegister(e) {
+  const onHandleRegister = (e) => {
     e.preventDefault();
 
     Axios.post("http://localhost:3001/register", {
-      username: this.state.usernameReg,
-      password: this.state.passwordReg,
+      username: usernameReg,
+      password: passwordReg,
       privilege: 0, // by default, user privilege is set to one
     }).then((response) => {
       console.log(response);
     });
 
     // clear form after signup btn is clicked
-    this.setState({
-      usernameReg: "",
-      passwordReg: "",
-    });
-  }
+    setUsernameReg("");
+    setPasswordReg("");
+  };
 
-  getLoginForm() {
+  const getLoginForm = () => {
     return (
       <Form className="mb-5">
         {/* username */}
@@ -103,9 +95,9 @@ class Login extends Component {
                 required
                 id="username-login-form"
                 type="text"
-                value={this.state.usernameLogin}
+                value={usernameLogin}
                 placeholder="Username"
-                onChange={(e) => this.onChangeSetUsernameLogin(e.target.value)}
+                onChange={(e) => setUsernameLogin(e.target.value)}
               />
             </InputGroup>
           </Col>
@@ -125,9 +117,9 @@ class Login extends Component {
                 required
                 id="password-login-form"
                 type="password"
-                value={this.state.passwordLogin}
+                value={passwordLogin}
                 placeholder="Password"
-                onChange={(e) => this.onChangeSetPasswordLogin(e.target.value)}
+                onChange={(e) => setPasswordLogin(e.target.value)}
               />
             </InputGroup>
           </Col>
@@ -149,15 +141,15 @@ class Login extends Component {
           variant="dark"
           size="lg"
           className="mt-3"
-          onClick={(e) => this.onHandleLogin(e)}
+          onClick={(e) => onHandleLogin(e)}
         >
           <BiLogIn /> Login!
         </Button>
       </Form>
     );
-  }
+  };
 
-  getRegisterForm() {
+  const getRegisterForm = () => {
     return (
       <Form>
         {/* username */}
@@ -174,9 +166,9 @@ class Login extends Component {
                 required
                 id="username-reg-form"
                 type="text"
-                value={this.state.usernameReg}
+                value={usernameReg}
                 placeholder="Username"
-                onChange={(e) => this.onChangeSetUsernameReg(e.target.value)}
+                onChange={(e) => this.setUsernameReg(e.target.value)}
               />
             </InputGroup>
           </Col>
@@ -196,9 +188,9 @@ class Login extends Component {
                 required
                 id="form-reg-password"
                 type="password"
-                value={this.state.passwordReg}
+                value={passwordReg}
                 placeholder="Password"
-                onChange={(e) => this.onChangeSetPasswordReg(e.target.value)}
+                onChange={(e) => setPasswordReg(e.target.value)}
               />
             </InputGroup>
           </Col>
@@ -209,25 +201,23 @@ class Login extends Component {
           variant="dark"
           size="lg"
           className="mt-3 mb-3"
-          onClick={(e) => this.onHandleRegister(e)}
+          onClick={(e) => onHandleRegister(e)}
         >
           <FiUserPlus /> Sign Me Up!
         </Button>
       </Form>
     );
-  }
+  };
 
-  render() {
-    return (
-      <Container>
-        <h2 className="mt-3">Login</h2>
-        {this.getLoginForm()}
-        <hr />
-        <h2 className="mt-3">Register</h2>
-        {this.getRegisterForm()}
-      </Container>
-    );
-  }
+  return (
+    <Container>
+      <h2 className="mt-3">Login</h2>
+      {getLoginForm()}
+      <hr />
+      <h2 className="mt-3">Register</h2>
+      {getRegisterForm()}
+    </Container>
+  );
 }
 
-export default Login;
+export default LoginAndReg;

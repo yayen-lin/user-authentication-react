@@ -14,7 +14,7 @@ import "./App.css";
 import Container from "react-bootstrap/Container";
 
 // auth
-import Login from "./components/auth/Login";
+import LoginAndReg from "./components/auth/LoginAndReg";
 
 // admin
 import Profile from "./components/admin/Profile";
@@ -57,8 +57,8 @@ class App extends Component {
               <Route exact path="/about">
                 <About />
               </Route>
-              <Route exact path="/login">
-                <Login />
+              <Route exact path="/login-and-reg">
+                <LoginAndReg />
               </Route>
               <Route exact path="/contact">
                 <Contact />

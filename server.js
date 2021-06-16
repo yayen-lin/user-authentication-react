@@ -2,30 +2,35 @@
 const path = require("path");
 const express = require("express");
 const app = express();
-const mysql = require("mysql");
-const bodyParser = require("body-parser");
-const cors = require("cors"); // enable cross-origin resource sharing in express
+// enable environment variable to be read
 require("dotenv").config();
-
+// enable cross-origin resource sharing in express
+const cors = require("cors");
+// mysql
+const mysql = require("mysql");
+// hasing and salting
 const bcrypt = require("bcrypt");
 const saltRounds = 10;
+// parsing req.body element from the frontend
+const bodyParser = require("body-parser");
+// parse cookie
+const cookieParser = require("cookie-parser");
+// creating session and maintaining (keeps users logged in)
+const session = require("express-session");
 
+// settings
 const PORT = process.env.PORT || 3001;
-
-// const corsOptions = {
-//   origin: ["http://www.carmax168.com", "http://localhost:" + PORT],
-//   methods: "GET,HEAD,PUT,PATCH,POST,DELETE,OPTIONS",
-//   allowedHeaders: ["Content-Type", "Authorization"],
-// };
-
-// app.use(cors(corsOptions));
-
-// Have Node serve the files for our built React app
-app.use(express.static(path.resolve(__dirname, "../client/build")));
-app.use(express.json());
-app.use(cors());
-app.use(bodyParser.urlencoded({ extended: true }));
-
+const corsOptions = {
+  // access-control-allow-origin
+  origin: [
+    "http://www.carmax168.com",
+    "http://localhost:3000",
+    "http://localhost:" + PORT,
+  ],
+  methods: ["GET", "HEAD", "PUT", "PATCH", "POST", "DELETE", "OPTIONS"],
+  allowedHeaders: ["Content-Type", "Authorization"],
+  credential: true, // allowing cookie to be enabled (access-control-allow-credentials)
+};
 const db = mysql.createPool({
   host: "taipeinerd.com",
   user: "ggdabhmy_admin",
@@ -33,23 +38,24 @@ const db = mysql.createPool({
   database: "ggdabhmy_carmax168",
   connectionLimit: 5,
 });
+const sess = {
+  key: "userId",
+  secret: process.env.SESSION_SECRET,
+  resave: false,
+  saveUninitialized: false,
+  cookie: {
+    expires: 60 * 60 * 24, // expires in 24 hrs
+  },
+};
 
-// app.get("/", (req, res) => {
-//   res.send("Hello World!");
-// });
+app.use(express.json());
+app.use(cors(corsOptions));
+app.use(cookieParser());
+app.use(bodyParser.urlencoded({ extended: true }));
+app.use(session(sess));
 
-// app.post("/api/insert", (req, res) => {
-//   const sqlInsert =
-//     "INSERT INTO movieReviews (movieName, movieReview) VALUES (?, ?)";
-
-//   const movieName = req.body.movieName;
-//   const movieReview = req.body.movieReview;
-
-//   db.query(sqlInsert, [movieName, movieReview], (err, result) => {
-//     res.send("Done inserting!");
-//     console.log("Done inserting!");
-//   });
-// });
+// Have Node serve the files for our built React app
+app.use(express.static(path.resolve(__dirname, "../client/build")));
 
 app.post("/register", (req, res) => {
   const username = req.body.username;
@@ -68,6 +74,15 @@ app.post("/register", (req, res) => {
       }
     );
   });
+});
+
+// see if the user is logged in
+app.get("/login", (req, res) => {
+  if (req.session.user) {
+    res.send({ loggedIn: true, user: req.session.user });
+  } else {
+    res.send({ loggedIn: false });
+  }
 });
 
 app.post("/login", (req, res) => {
@@ -90,6 +105,8 @@ app.post("/login", (req, res) => {
         if (result.length > 0) {
           bcrypt.compare(password, result[0].password, (error, response) => {
             if (response) {
+              req.session.user = result;
+              console.log(req.session.user);
               // login successfully
               res.send(result);
             } else {
@@ -104,9 +121,14 @@ app.post("/login", (req, res) => {
   });
 });
 
-app.get("/api", (req, res) => {
-  res.json({ message: "Hello from server! - MOJO" });
+// Last case: url not found
+app.get("/*", function (req, res) {
+  res.json({ message: "404 Not found" });
 });
+
+// app.get("/api", (req, res) => {
+//   res.json({ message: "Hello from server! - MOJO" });
+// });
 
 app.listen(PORT, () => {
   console.log(`YOYOYO\! Server listening on ${PORT}`);

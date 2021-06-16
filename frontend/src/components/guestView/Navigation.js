@@ -93,7 +93,7 @@ class Navigation extends Component {
       case "Logout":
         return "/logout";
       case "Login":
-        return "/login";
+        return "/login-and-reg";
       case "Help":
         return "/help";
       case "Home":
