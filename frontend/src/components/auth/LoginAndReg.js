@@ -17,18 +17,6 @@ import { BiKey, BiLogIn } from "react-icons/bi";
 import { FiTag, FiUserPlus, FiLock } from "react-icons/fi";
 
 function LoginAndReg(props) {
-  // constructor(props) {
-  //   super(props);
-  //   this.state = {
-  //     dummy_data: "abc",
-  //     usernameLogin: "",
-  //     passwordLogin: "",
-  //     usernameReg: "",
-  //     passwordReg: "",
-  //     loginStatus: false,
-  //   };
-  // }
-
   const [usernameLogin, setUsernameLogin] = useState("");
   const [passwordLogin, setPasswordLogin] = useState("");
   const [usernameReg, setUsernameReg] = useState("");
@@ -39,7 +27,8 @@ function LoginAndReg(props) {
 
   useEffect(() => {
     Axios.get("http://localhost:3001/login").then((response) => {
-      if (response.data.loggedIn == true) {
+      console.log(response);
+      if (response.data.loggedIn === true) {
         setLoginStatus(response.data.user[0].username);
       }
     });
@@ -168,7 +157,7 @@ function LoginAndReg(props) {
                 type="text"
                 value={usernameReg}
                 placeholder="Username"
-                onChange={(e) => this.setUsernameReg(e.target.value)}
+                onChange={(e) => setUsernameReg(e.target.value)}
               />
             </InputGroup>
           </Col>

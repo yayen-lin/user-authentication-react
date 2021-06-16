@@ -23,13 +23,13 @@ const PORT = process.env.PORT || 3001;
 const corsOptions = {
   // access-control-allow-origin
   origin: [
-    "http://www.carmax168.com",
+    "https://www.carmax168.com",
     "http://localhost:3000",
-    "http://localhost:" + PORT,
+    // "http://localhost:" + PORT,
   ],
-  methods: ["GET", "HEAD", "PUT", "PATCH", "POST", "DELETE", "OPTIONS"],
+  methods: ["GET", "PUT", "POST", "DELETE"],
   allowedHeaders: ["Content-Type", "Authorization"],
-  credential: true, // allowing cookie to be enabled (access-control-allow-credentials)
+  credentials: true, // allowing cookie to be enabled (access-control-allow-credentials)
 };
 const db = mysql.createPool({
   host: "taipeinerd.com",
@@ -39,17 +39,39 @@ const db = mysql.createPool({
   connectionLimit: 5,
 });
 const sess = {
-  key: "userId",
+  key: "userId", // name of the cookie we create
   secret: process.env.SESSION_SECRET,
   resave: false,
   saveUninitialized: false,
   cookie: {
-    expires: 60 * 60 * 24, // expires in 24 hrs
+    expires: 1000 * 60 * 60 * 24, // cookie expires in 24 hrs
   },
 };
 
 app.use(express.json());
 app.use(cors(corsOptions));
+// app.use(cors());
+// app.use((req, res, next) => {
+//   const allowedOrigins = [
+//     "https://www.carmax168.com",
+//     "http://localhost:3000",
+//     "http://localhost:" + PORT,
+//   ];
+//   const origin = req.headers.origin;
+//   if (allowedOrigins.includes(origin)) {
+//     res.setHeader("Access-Control-Allow-Origin", origin);
+//   }
+//   res.header(
+//     "Access-Control-Allow-Headers",
+//     "Origin, X-Requested-With, Content-Type, Accept, Authorization"
+//   );
+//   res.header("Access-Control-Allow-Credentials", true);
+//   res.header("Access-Control-Allow-Methods", "GET, PUT, POST, DELETE");
+//   const err = new Error("Not Found");
+//   err.status = 404;
+//   next(err);
+// });
+
 app.use(cookieParser());
 app.use(bodyParser.urlencoded({ extended: true }));
 app.use(session(sess));
@@ -105,11 +127,12 @@ app.post("/login", (req, res) => {
         if (result.length > 0) {
           bcrypt.compare(password, result[0].password, (error, response) => {
             if (response) {
-              req.session.user = result;
-              console.log(req.session.user);
               // login successfully
+              req.session.user = result; // create a session
+              console.log(req.session.user);
               res.send(result);
             } else {
+              // login fail
               res.send({ message: "Wrong username or password!" });
             }
           });
