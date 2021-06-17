@@ -32,7 +32,14 @@ const corsOptions = {
     // "http://localhost:" + PORT,
   ],
   methods: ["GET", "PUT", "POST", "DELETE"],
-  allowedHeaders: ["Content-Type", "Authorization"],
+  allowedHeaders: [
+    "Content-Type",
+    "Authorization",
+    "Origin",
+    "X-Requested-With",
+    "Accept",
+    "X-Access-Token",
+  ],
   credentials: true, // allowing cookie to be enabled (access-control-allow-credentials)
 };
 const db = mysql.createPool({
@@ -177,11 +184,11 @@ app.post("/login", (req, res) => {
               });
             } else {
               // login fail
-              res.send({ message: "Wrong username or password!" });
+              res.json({ auth: false, message: "Wrong username or password!" });
             }
           });
         } else {
-          res.send({ message: "User doesn't exist!" });
+          res.json({ auth: false, message: "User doesn't exist!" });
         }
       }
     );

@@ -21,18 +21,34 @@ function LoginAndReg(props) {
   const [passwordLogin, setPasswordLogin] = useState("");
   const [usernameReg, setUsernameReg] = useState("");
   const [passwordReg, setPasswordReg] = useState("");
-  const [loginStatus, setLoginStatus] = useState("");
+  const [loginStatus, setLoginStatus] = useState(false);
+  const [loggedInUser, setLoggedInUser] = useState("");
+
+  // verifying to see if this is the correct user in the frontend.
 
   Axios.defaults.withCredentials = true;
 
   useEffect(() => {
+    isLoggedIn();
+  }, []);
+
+  const isLoggedIn = (e = null) => {
+    if (e) e.preventDefault();
     Axios.get("http://localhost:3001/login").then((response) => {
-      console.log(response);
+      // console.log(response);
       if (response.data.loggedIn === true) {
-        setLoginStatus(response.data.user[0].username);
+        setLoggedInUser(response.data.user[0].username);
       }
     });
-  }, []);
+  };
+
+  const userIsAuth = () => {
+    Axios.get("http://localhost:3001/isUserAuth", {
+      headers: { "x-access-token": localStorage.getItem("token") },
+    }).then((response) => {
+      console.log(response);
+    });
+  };
 
   const onHandleLogin = (e) => {
     e.preventDefault();
@@ -41,12 +57,16 @@ function LoginAndReg(props) {
       username: usernameLogin,
       password: passwordLogin,
     }).then((response) => {
-      if (response.data.message) {
-        console.log(response.data);
+      // console.log(response);
+      if (!response.data.auth) {
+        setLoginStatus(false);
+        // console.log(response.data);
       } else {
-        console.log(response.data);
         setLoginStatus(true);
+        // isLoggedIn(e);
+        // console.log(response.data);
         // clear form after submit upon success
+        localStorage.setItem("token", response.data.token);
         setUsernameLogin("");
         setPasswordLogin("");
       }
@@ -200,6 +220,16 @@ function LoginAndReg(props) {
 
   return (
     <Container>
+      {loginStatus ? (
+        <>
+          <h2>{loggedInUser}</h2>
+        </>
+      ) : (
+        <h2>Not Logged In</h2>
+      )}
+      <Button onClick={() => userIsAuth()}>check if authenticated</Button>
+      <hr />
+
       <h2 className="mt-3">Login</h2>
       {getLoginForm()}
       <hr />
