@@ -8,6 +8,7 @@ require("dotenv").config();
 const cors = require("cors");
 // mysql
 const mysql = require("mysql");
+// (authorization)
 // hasing and salting
 const bcrypt = require("bcrypt");
 const saltRounds = 10;
@@ -17,6 +18,9 @@ const bodyParser = require("body-parser");
 const cookieParser = require("cookie-parser");
 // creating session and maintaining (keeps users logged in)
 const session = require("express-session");
+// (authentication)
+// json web token, needed for logged in users to make every api requests
+const jwt = require("jsonwebtoken");
 
 // settings
 const PORT = process.env.PORT || 3001;
