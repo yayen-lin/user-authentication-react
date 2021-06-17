@@ -102,6 +102,28 @@ app.post("/register", (req, res) => {
   });
 });
 
+const verifyJWT = (req, res, next) => {
+  const token = req.headers["x-access-token"]; // grabbing token from header
+
+  if (!token) {
+    res.send("Yo, we need a token, please give it to us next time!");
+  } else {
+    jwt.verify(token, process.env.JWT_SECRET, (err, decoded) => {
+      if (err) {
+        // fail to authenticate
+        res.json({ auth: false, message: "Failed to authenticate" });
+      } else {
+        req.userId = decoded.id; // saving the decoded id (token) for further verifications/authenticated requests.
+        next();
+      }
+    });
+  }
+};
+
+app.get("/isUserAuth", verifyJWT, (req, res) => {
+  res.send("YOYOYO! You are authenticated!");
+});
+
 // see if the user is logged in
 app.get("/login", (req, res) => {
   if (req.session.user) {
@@ -115,8 +137,12 @@ app.post("/login", (req, res) => {
   const username = req.body.username;
   const password = req.body.password;
 
+  // console.log(typeof password); // string
+
   // hash + salt
   bcrypt.hash(password.saltRounds, (err, hash) => {
+    // TODO: Error: data must be a string or Buffer and salt must
+    // either be a salt string or a number of rounds
     if (err) {
       console.log(err);
     }
@@ -132,9 +158,23 @@ app.post("/login", (req, res) => {
           bcrypt.compare(password, result[0].password, (error, response) => {
             if (response) {
               // login successfully
+              console.log("Logged in successfully!");
+
+              // create a jwt
+              const id = result[0].user_id;
+              const token = jwt.sign({ id }, process.env.JWT_SECRET, {
+                expiresIn: 300, // 5 mins
+              });
+
               req.session.user = result; // create a session
               console.log(req.session.user);
-              res.send(result);
+
+              // res.send(result);
+              res.json({
+                auth: true, // authorized
+                token: token,
+                result: result,
+              });
             } else {
               // login fail
               res.send({ message: "Wrong username or password!" });
