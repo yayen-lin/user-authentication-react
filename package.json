@@ -8,9 +8,9 @@
   },
   "scripts": {
     "start": "node server.js",
-    "devStart": "nodemon server.js",
     "dev": "nodemon server.js",
-    "build": "cd client && npm install && npm run build",
+    "build": "cd frontend && npm run build",
+    "i-frontend": "cd frontend && npm install",
     "test": "echo \"Error: no test specified\" && exit 1"
   },
   "repository": {
@@ -18,7 +18,7 @@
     "url": "git+https://github.com/yayen-lin/carmax168.git"
   },
   "keywords": [],
-  "author": "",
+  "author": "Yayen Lin",
   "license": "ISC",
   "bugs": {
     "url": "https://github.com/yayen-lin/carmax168/issues"

@@ -195,7 +195,16 @@ app.post("/login", (req, res) => {
   });
 });
 
-// Last case: url not found
+// Express only serves static assets in production
+if (process.env.NODE_ENV === "production") {
+  app.use(express.static("frontend/build"));
+
+  app.get("*", (req, res) => {
+    res.sendFile(path.resolve(__dirname, "frontend", "build", "index.html"));
+  });
+}
+
+// when a url not found
 app.get("/*", function (req, res) {
   res.json({ message: "404 Not found" });
 });
