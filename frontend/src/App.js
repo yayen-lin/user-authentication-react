@@ -4,7 +4,7 @@ import {
   BrowserRouter as Router,
   Switch,
   Route,
-  Link,
+  // Link,
   Redirect,
 } from "react-router-dom";
 // import Axios from "axios";
@@ -14,7 +14,7 @@ import "./App.css";
 import Container from "react-bootstrap/Container";
 
 // auth
-import Login from "./components/auth/Login";
+import LoginAndReg from "./components/auth/LoginAndReg";
 
 // admin
 import Profile from "./components/admin/Profile";
@@ -45,13 +45,6 @@ class App extends Component {
           <div>
             <Navigation />
             <Switch id="body">
-              <Route
-                exact
-                path="/"
-                render={() => {
-                  <Redirect to="/home" />;
-                }}
-              />
               <Route exact path="/home">
                 <Home />
               </Route>
@@ -64,12 +57,18 @@ class App extends Component {
               <Route exact path="/about">
                 <About />
               </Route>
-              <Route exact path="/login">
-                <Login />
+              <Route exact path="/login-and-reg">
+                <LoginAndReg />
               </Route>
               <Route exact path="/contact">
                 <Contact />
               </Route>
+
+              {/* Redirect to home page */}
+              <Route exact path="/">
+                <Redirect to="/home" />
+              </Route>
+              {/* 404 Not Found */}
               <Route path="*">
                 <div>404 Not Found</div>
               </Route>

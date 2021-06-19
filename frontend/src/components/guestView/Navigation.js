@@ -26,7 +26,7 @@ class Navigation extends Component {
   constructor(props) {
     super(props);
     this.state = {
-      navbarAdmin: ["Home", "About", "Contact", "Profile", "Help", "Logout"],
+      navbarAdmin: ["Home", "About", "Contact", "Profile", "Help", "Logout"], // + manage users, + ?
       navbarUser: ["Home", "About", "Contact", "Help", "Login"],
     };
   }
@@ -93,7 +93,7 @@ class Navigation extends Component {
       case "Logout":
         return "/logout";
       case "Login":
-        return "/login";
+        return "/login-and-reg";
       case "Help":
         return "/help";
       case "Home":
@@ -148,17 +148,21 @@ class Navigation extends Component {
     return (
       <Navbar collapseOnSelect expand="lg" bg="dark" variant="dark">
         <Container>
-          <LinkContainer to="/">
-            <Navbar.Brand>
-              <h3>
-                <IoHomeOutline size="1.3rem" /> Carmax168
-              </h3>
-            </Navbar.Brand>
-          </LinkContainer>
-          <Navbar.Toggle aria-controls="responsive-navbar-nav" />
-          <Navbar.Collapse id="responsive-navbar-nav">
-            <Nav className="mr-auto">{this.renderRoute(navbarContent)}</Nav>
-          </Navbar.Collapse>
+          <div>
+            <LinkContainer to="/">
+              <Navbar.Brand>
+                <h3>
+                  <IoHomeOutline size="1.3rem" /> Carmax168
+                </h3>
+              </Navbar.Brand>
+            </LinkContainer>
+          </div>
+          <div>
+            <Navbar.Toggle aria-controls="responsive-navbar-nav" />
+            <Navbar.Collapse id="responsive-navbar-nav">
+              <Nav className="mr-auto">{this.renderRoute(navbarContent)}</Nav>
+            </Navbar.Collapse>
+          </div>
         </Container>
       </Navbar>
     );
