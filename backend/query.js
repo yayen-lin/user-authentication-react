@@ -59,14 +59,17 @@ exports.execQuery = (
           });
 
         conn.query(query, val, async (error, results) => {
-          // Always release the connection back
+          // always release the connection back
           release(conn);
 
+          // failure
           if (error) {
             console.log("Syntax error in query!");
             console.log(error);
             return reject({ err: error, failureMsg: failure });
-          } else return resolve(results);
+          }
+          // success
+          else return resolve(results);
         });
       }
     });
