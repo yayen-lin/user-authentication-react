@@ -42,13 +42,13 @@ const corsOptions = {
   ],
   credentials: true, // allowing cookie to be enabled (access-control-allow-credentials)
 };
-const db = mysql.createPool({
-  host: "taipeinerd.com",
-  user: "ggdabhmy_admin",
-  password: process.env.DB_PASSWORD,
-  database: "ggdabhmy_carmax168",
-  connectionLimit: 5,
-});
+// const db = mysql.createPool({
+//   host: "taipeinerd.com",
+//   user: "ggdabhmy_admin",
+//   password: process.env.DB_PASSWORD,
+//   database: "ggdabhmy_carmax168",
+//   connectionLimit: 5,
+// });
 const sess = {
   key: "userId", // name of the cookie we create
   secret: process.env.SESSION_SECRET,

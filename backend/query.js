@@ -1,3 +1,10 @@
+/**
+ * Processing MySQL queries.
+ *
+ * @version 1.0.0
+ * @author [Yayen Lin](https://github.com/yayen-lin)
+ */
+
 // imports for mysql and env var
 const mysql = require("mysql");
 require("dotenv").config();
