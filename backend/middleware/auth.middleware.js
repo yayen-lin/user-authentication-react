@@ -1,67 +1,66 @@
+/**
+ * Admin login/signup/update/delete actions which execute the queries defined in auth.models.js.
+ *
+ * @version 1.0.0
+ * @author [Yayen Lin](https://github.com/yayen-lin)
+ * src: https://github.com/Scavenge-UW/Scavenge
+ */
+
 const { promisify } = require("util");
 const { execQuery } = require("../query");
 const authDB = require("../models/user.models");
 
 /*
  * Helper middleware function that verifies if a user is truly logged in.
- * Sets req.user to the user and req.employeeOf to be the ids of pantries they work for.
- * Otherwise, both will be null.
+ * Sets req.user to the user; otherwise, user will be null.
  */
 exports.verifyAndGetUserInfo = async (req, res, next) => {
   if (req.cookies.jwt) {
     // async returns a promise after the await
     // verify is from jwt web tokens
-    // 1. Verify the token
+    // 1. verify the token
     const decoded = await promisify(jwt.verify)(
       req.cookies.jwt,
       process.env.JWT_SECRET
     );
     console.log(decoded);
-    2;
 
-    // 2. Check if the user still exists and get user info from DB
+    // 2. check if the user still exists and get user info from DB
     const query = `
       SELECT * FROM user WHERE username = ?;
     `;
     execQuery("select", query, [decoded.username])
       .then(async (result) => {
         if (!result) {
+          // if user doesn't exist in the database
           req.user = null;
           next();
         } else {
-          // Verified user
+          // verified user
           req.user = result[0];
-
-          // Get pantries they work for
-          const isEmployeeOf = await authDB.isEmployeeOf(req, res, {
-            username: req.user.username,
-          });
-          let isEmployeeOfArr = [];
-          isEmployeeOf.forEach((data) => {
-            isEmployeeOfArr.push(data["pantry_id"]);
-          });
-          req.isEmployeeOf = isEmployeeOfArr;
           next();
         }
       })
       .catch((err) => {
         console.log(err);
         req.user = null;
-        return res.status(500).json({ message: "Server error" });
+        return res.status(500).json({
+          message: "Server error while setting the user in middleware",
+        });
       });
   } else if (req.headers["x-access-token"] || req.headers["authorization"]) {
     let token = req.headers["x-access-token"] || req.headers["authorization"];
 
-    // Remove Bearer from string
+    // remove Bearer from string
     token = token.replace(/^Bearer\s+/, "");
 
     jwt.verify(token, process.env.JWT_SECRET, (err, decoded) => {
       if (err) {
-        // Token is not valid
+        // token is not valid
         req.user = null;
         next();
       } else {
-        // User is signed in, but we need to check if the username still exists
+        // user is signed in, but we need to check if the username still exists
         const query = `
           SELECT * FROM user WHERE username = ?;
         `;
@@ -71,18 +70,8 @@ exports.verifyAndGetUserInfo = async (req, res, next) => {
               req.user = null;
               next();
             }
-            // Got login info and user if verified
+            // got login info and user if verified
             req.user = result[0];
-
-            // Get pantries they work for
-            const isEmployeeOf = await authDB.isEmployeeOf(req, res, {
-              username: req.user.username,
-            });
-            let isEmployeeOfArr = [];
-            isEmployeeOf.forEach((data) => {
-              isEmployeeOfArr.push(data["pantry_id"]);
-            });
-            req.isEmployeeOf = isEmployeeOfArr;
             next();
           })
           .catch((err) => {

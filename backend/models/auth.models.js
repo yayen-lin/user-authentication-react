@@ -1,8 +1,9 @@
 /**
- * Admin login/signup/update/delete models.
+ * Prepares for admin login/signup/update/delete queries.
  *
  * @version 1.0.0
  * @author [Yayen Lin](https://github.com/yayen-lin)
+ * src: https://github.com/Scavenge-UW/Scavenge
  */
 
 const { execQuery } = require("../query");
@@ -53,6 +54,7 @@ exports.adminSignup = async (req, res, newUser) => {
 };
 
 exports.adminUpdate = async (req, res, newInfo) => {
+  const saltRounds = 10;
   const query = `
     UPDATE user u
     SET 
@@ -66,7 +68,9 @@ exports.adminUpdate = async (req, res, newInfo) => {
   await bcrypt.hash(newUser.password, saltRounds, (err, hash) => {
     if (err) console.log(err);
     else {
-      const values = [[newUser.username, hash, newUser.previlege]];
+      const values = [
+        [newUser.username, hash, newUser.previlege, req.params.username],
+      ];
       return await execQuery("update", query, values);
     }
   });
