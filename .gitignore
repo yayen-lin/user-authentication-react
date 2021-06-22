@@ -1,11 +1,11 @@
 # npm dependencies
-node_modules
+node_modules/
 
 .env
-
-# mac
-.DS_Store
+.nyc_output/
 
 # git
 .git
 
+# mac
+.DS_Store
