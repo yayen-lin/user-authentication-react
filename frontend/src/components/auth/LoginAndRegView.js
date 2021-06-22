@@ -22,7 +22,7 @@ class LoginAndRegView extends Component {
       // login
       usernameLogin: "",
       passwordLogin: "",
-      toHomeView: false, // used for redirection on login success
+      toHomeView: false, // used for redirection on login/signup success
       // signup
       usernameSignup: "",
       passwordSignup: "",

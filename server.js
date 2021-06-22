@@ -67,7 +67,6 @@ app.use((req, res, next) => {
   const origin = req.headers.origin;
   const allowedOrigins = [
     "https://www.carmax168.com",
-    // "http://localhost:3000",
     "http://localhost:" + PORT,
   ];
   if (allowedOrigins.includes(origin)) {
@@ -205,6 +204,7 @@ global.bcrypt = bcrypt;
 const authRoutes = require("./backend/routes/auth.routes");
 app.use("/", authRoutes);
 
+// ----------------------- production build -----------------------
 // Express only serves static assets in production
 if (process.env.NODE_ENV === "production") {
   app.use(express.static("frontend/build"));
@@ -214,15 +214,12 @@ if (process.env.NODE_ENV === "production") {
   });
 }
 
-// when a url not found
+// ----------------------- url not found -----------------------
 app.get("/*", function (req, res) {
   res.json({ message: "404 Not found" });
 });
 
-// app.get("/api", (req, res) => {
-//   res.json({ message: "Hello from server! - MOJO" });
-// });
-
+// ----------------------- app listen -----------------------
 app.listen(PORT, () => {
   console.log(`YOYOYO\! Server listening on ${PORT}`);
 });

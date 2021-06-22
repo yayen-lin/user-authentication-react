@@ -9,6 +9,7 @@ import {
 } from "react-router-dom";
 
 // imports for action notification
+// reference: https://fkhadra.github.io/react-toastify/introduction
 import { ToastContainer, toast } from "react-toastify";
 
 // auth
@@ -163,7 +164,7 @@ class App extends Component {
         <Router>
           <ToastContainer
             position="top-right"
-            autoClose={3000} // 3 sec
+            autoClose={3000} // set to 3 sec
             hideProgressBar={false}
             newestOnTop={false}
             closeOnClick
@@ -195,8 +196,8 @@ class App extends Component {
               </Route>
               <Route exact path="/login-and-reg">
                 <LoginAndRegView
-                  login={() => this.login()}
-                  signup={() => this.signup()}
+                  login={(user) => this.login(user)}
+                  signup={(user) => this.signup(user)}
                 />
               </Route>
               <Route exact path="/contact">
