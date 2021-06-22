@@ -1,7 +1,6 @@
-import React, { useEffect, useState } from "react";
-
-// connect to our backend
-import Axios from "axios";
+import React, { Component } from "react";
+import { Redirect } from "react-router-dom";
+import { toast } from "react-toastify";
 
 // imports for bootstrap
 import Col from "react-bootstrap/Col";
@@ -16,80 +15,119 @@ import FormControl from "react-bootstrap/FormControl";
 import { BiKey, BiLogIn } from "react-icons/bi";
 import { FiTag, FiUserPlus, FiLock } from "react-icons/fi";
 
-function LoginAndReg(props) {
-  const [usernameLogin, setUsernameLogin] = useState("");
-  const [passwordLogin, setPasswordLogin] = useState("");
-  const [usernameReg, setUsernameReg] = useState("");
-  const [passwordReg, setPasswordReg] = useState("");
-  const [loginStatus, setLoginStatus] = useState(false);
-  const [loggedInUser, setLoggedInUser] = useState("");
+class LoginAndRegView extends Component {
+  constructor(props) {
+    super(props);
+    this.state = {
+      // login
+      usernameLogin: "",
+      passwordLogin: "",
+      toHomeView: false, // used for redirection on login success
+      // signup
+      usernameSignup: "",
+      passwordSignup: "",
+      privilegeSignup: "",
+    };
+  }
 
-  // verifying to see if this is the correct user in the frontend.
-
-  Axios.defaults.withCredentials = true;
-
-  useEffect(() => {
-    isLoggedIn();
-  }, []);
-
-  const isLoggedIn = (e = null) => {
-    if (e) e.preventDefault();
-    Axios.get("http://localhost:3001/login").then((response) => {
-      // console.log(response);
-      if (response.data.loggedIn === true) {
-        setLoggedInUser(response.data.user[0].username);
-      }
+  setUsernameLogin(un) {
+    this.setState({
+      usernameLogin: un,
     });
-  };
-
-  const userIsAuth = () => {
-    Axios.get("http://localhost:3001/isUserAuth", {
-      headers: { "x-access-token": localStorage.getItem("token") },
-    }).then((response) => {
-      console.log(response);
+  }
+  setPasswordLogin(pw) {
+    this.setState({
+      passwordLogin: pw,
     });
-  };
+  }
+  setUsernameSignup(un) {
+    this.setState({
+      usernameSignup: un,
+    });
+  }
+  setPasswordSignup(pw) {
+    this.setState({
+      passwordSignup: pw,
+    });
+  }
+  setPrivilegeSignup(priv) {
+    this.setState({
+      privilegeSignup: priv,
+    });
+  }
 
-  const onHandleLogin = (e) => {
+  async onHandleLogin(e) {
     e.preventDefault();
 
-    Axios.post("http://localhost:3001/login", {
-      username: usernameLogin,
-      password: passwordLogin,
-    }).then((response) => {
-      // console.log(response);
-      if (!response.data.auth) {
-        setLoginStatus(false);
-        // console.log(response.data);
-      } else {
-        setLoginStatus(true);
-        // isLoggedIn(e);
-        // console.log(response.data);
-        // clear form after submit upon success
-        localStorage.setItem("token", response.data.token);
-        setUsernameLogin("");
-        setPasswordLogin("");
-      }
-    });
-  };
+    const user = {
+      username: this.state.usernameLogin,
+      password: this.state.passwordLogin,
+    };
 
-  const onHandleRegister = (e) => {
+    if (
+      this.state.usernameLogin.length == 0 ||
+      this.state.passwordLogin.length == 0
+    ) {
+      toast.error("Username or password field is empty.");
+      return;
+    }
+
+    let loginResult = await this.props.login(user);
+    if (loginResult === 0) {
+      // Successful login
+      this.setState({
+        toHomeView: true,
+      });
+    }
+  }
+
+  async onHandleSignup(e) {
     e.preventDefault();
 
-    Axios.post("http://localhost:3001/register", {
-      username: usernameReg,
-      password: passwordReg,
-      privilege: 0, // by default, user privilege is set to one
-    }).then((response) => {
-      console.log(response);
-    });
+    const user = {
+      username: this.state.usernameSignup,
+      password: this.state.passwordSignup,
+      privilege: this.state.privilegeSignup,
+    };
+
+    let errors = [];
+
+    if (this.state.username.length == 0) {
+      errors.push("Username field is empty");
+    }
+
+    if (this.state.password.length == 0) {
+      errors.push("Password field is empty");
+    }
+
+    if (this.state.privilege.length == 0) {
+      errors.push("privilege field is empty");
+    }
+
+    if (errors.length != 0) {
+      toast.error(
+        <ul>
+          {errors.map((er) => {
+            return <li>{er}</li>;
+          })}
+        </ul>
+      );
+    } else {
+      let signupResult = await this.props.signup(user);
+      if (signupResult === 0) {
+        // Successful signup
+        this.setState({
+          toHomeView: true,
+        });
+      }
+    }
 
     // clear form after signup btn is clicked
-    setUsernameReg("");
-    setPasswordReg("");
-  };
+    // setUsernameReg("");
+    // setPasswordReg("");
+  }
 
-  const getLoginForm = () => {
+  getLoginForm() {
     return (
       <Form className="mb-5">
         {/* username */}
@@ -104,9 +142,9 @@ function LoginAndReg(props) {
                 required
                 id="username-login-form"
                 type="text"
-                value={usernameLogin}
+                value={this.state.usernameLogin}
                 placeholder="Username"
-                onChange={(e) => setUsernameLogin(e.target.value)}
+                onChange={(e) => this.setUsernameLogin(e.target.value)}
               />
             </InputGroup>
           </Col>
@@ -126,9 +164,9 @@ function LoginAndReg(props) {
                 required
                 id="password-login-form"
                 type="password"
-                value={passwordLogin}
+                value={this.state.passwordLogin}
                 placeholder="Password"
-                onChange={(e) => setPasswordLogin(e.target.value)}
+                onChange={(e) => this.setPasswordLogin(e.target.value)}
               />
             </InputGroup>
           </Col>
@@ -150,15 +188,15 @@ function LoginAndReg(props) {
           variant="dark"
           size="lg"
           className="mt-3"
-          onClick={(e) => onHandleLogin(e)}
+          onClick={(e) => this.onHandleLogin(e)}
         >
           <BiLogIn /> Login!
         </Button>
       </Form>
     );
-  };
+  }
 
-  const getRegisterForm = () => {
+  getRegisterForm() {
     return (
       <Form>
         {/* username */}
@@ -175,9 +213,9 @@ function LoginAndReg(props) {
                 required
                 id="username-reg-form"
                 type="text"
-                value={usernameReg}
+                value={this.state.usernameSignup}
                 placeholder="Username"
-                onChange={(e) => setUsernameReg(e.target.value)}
+                onChange={(e) => this.setUsernameSignup(e.target.value)}
               />
             </InputGroup>
           </Col>
@@ -197,9 +235,9 @@ function LoginAndReg(props) {
                 required
                 id="form-reg-password"
                 type="password"
-                value={passwordReg}
+                value={this.state.passwordSignup}
                 placeholder="Password"
-                onChange={(e) => setPasswordReg(e.target.value)}
+                onChange={(e) => this.setPasswordSignup(e.target.value)}
               />
             </InputGroup>
           </Col>
@@ -210,33 +248,25 @@ function LoginAndReg(props) {
           variant="dark"
           size="lg"
           className="mt-3 mb-3"
-          onClick={(e) => onHandleRegister(e)}
+          onClick={(e) => this.onHandleSignup(e)}
         >
           <FiUserPlus /> Sign Me Up!
         </Button>
       </Form>
     );
-  };
+  }
 
-  return (
-    <Container>
-      {loginStatus ? (
-        <>
-          <h2>{loggedInUser}</h2>
-        </>
-      ) : (
-        <h2>Not Logged In</h2>
-      )}
-      <Button onClick={() => userIsAuth()}>check if authenticated</Button>
-      <hr />
-
-      <h2 className="mt-3">Login</h2>
-      {getLoginForm()}
-      <hr />
-      <h2 className="mt-3">Register</h2>
-      {getRegisterForm()}
-    </Container>
-  );
+  render() {
+    return (
+      <Container>
+        <h2 className="mt-3">Login</h2>
+        {this.getLoginForm()}
+        <hr />
+        <h2 className="mt-3">Register</h2>
+        {this.getRegisterForm()}
+      </Container>
+    );
+  }
 }
 
-export default LoginAndReg;
+export default LoginAndRegView;

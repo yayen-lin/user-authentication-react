@@ -1,5 +1,5 @@
+import "./App.css";
 import React, { Component } from "react";
-import { render } from "react-dom";
 import {
   BrowserRouter as Router,
   Switch,
@@ -7,17 +7,16 @@ import {
   // Link,
   Redirect,
 } from "react-router-dom";
-// import Axios from "axios";
-// import logo from "./logo.svg";
-import "./App.css";
 
-import Container from "react-bootstrap/Container";
+// imports for action notification
+import { ToastContainer, toast } from "react-toastify";
 
 // auth
-import LoginAndReg from "./components/auth/LoginAndReg";
+import AuthService from "./services/auth.service";
+import LoginAndRegView from "./components/auth/LoginAndRegView";
 
 // admin
-import Profile from "./components/admin/Profile";
+// import Profile from "./components/admin/Profile";
 
 // guest views
 import Home from "./components/guestView/Home";
@@ -31,8 +30,128 @@ class App extends Component {
   constructor(props) {
     super(props);
     this.state = {
-      dummy_data: "abc",
+      username: "",
+      token: "",
+      profile: "",
     };
+  }
+
+  setUsername(un) {
+    this.setState({
+      username: un,
+    });
+  }
+
+  setToken(token) {
+    this.setState({
+      token: token,
+    });
+  }
+
+  setProfile(userInfo) {
+    this.setState({
+      profile: userInfo,
+    });
+  }
+
+  // Admin (loggedIn = true)
+  // - the person that has higher authority
+  // - privilege is set to 1
+  // - has access to manage site managers and admins
+  // - can do simple edition to the site (e.g. update site info)
+  isAdmin() {
+    return this.state.profile.privilege === 1;
+  }
+
+  // Manager (loggedIn = true)
+  // - a person that manage the site
+  // - privilege is set to 0
+  // - has no access to manage site managers and admins
+  // - can do simple edition to the site (e.g. update site info)
+  isManager() {
+    return this.state.profile.privilege === 0;
+  }
+
+  // visitor (if not logged in)
+  // If the state is logged in, the profile is not empty and will have the logged in user info
+  // else this user is a visitor
+  isLoggedIn() {
+    return this.state.profile !== "";
+  }
+
+  /**
+   * Sign up
+   * -
+   *
+   * @param {Object} user Object with `username` and `password` as keys
+   * @returns 0 if sign up successful, -1 if sign up failure
+   */
+  async signup(user) {
+    return AuthService.signup(user).then((response) => {
+      console.log("res", response);
+      if (response.message) {
+        // When the API returns `message`, that means the signup has failed
+        if (response.message.failureMsg) {
+          // Duplicate username
+          toast.error(response.message.failureMsg);
+          return -1;
+        }
+
+        toast.error(response.message);
+        return -1;
+      } else {
+        this.setUsername(response.username);
+        this.setToken(response.token);
+        this.setProfile(response.profile);
+
+        // We only need to import toast in other components
+        // if we want to make a notification there.
+        toast.success("🚀 Successfully signed up!");
+
+        return 0;
+      }
+    });
+  }
+
+  /**
+   * Log in
+   * - fetch profile of the user, and store user info in the state.
+   *
+   * @param {Object} user Object with `username` and `password` as keys
+   * @returns 0 if login successful, -1 if login failure
+   */
+  async login(user) {
+    return AuthService.login(user).then((response) => {
+      if (response.message) {
+        // When the API returns `message`, that means the login has failed
+        toast.error(response.message);
+        return -1;
+      } else {
+        this.setUsername(response.username);
+        this.setToken(response.token);
+        this.setProfile(response.profile);
+
+        // We only need to import toast in other components
+        // if we want to make a notification there.
+        toast.success("🚀 Successfully logged in!");
+
+        return 0;
+      }
+    });
+  }
+
+  async logout() {
+    return AuthService.logout().then((response) => {
+      if (response.error) {
+        toast.error(response.message);
+      } else {
+        this.setUsername("");
+        this.setToken("");
+        this.setProfile("");
+
+        toast.info("👋 You are logged out. See you again!");
+      }
+    });
   }
 
   // note:
@@ -40,11 +159,28 @@ class App extends Component {
   //    https://www.pluralsight.com/guides/how-to-set-react-router-default-route-redirect-to-home
   render() {
     return (
-      <div>
+      <div id="body-div">
         <Router>
+          <ToastContainer
+            position="top-right"
+            autoClose={3000} // 3 sec
+            hideProgressBar={false}
+            newestOnTop={false}
+            closeOnClick
+            rtl={false}
+            pauseOnFocusLoss
+            draggable
+            pauseOnHover
+          />
           <div>
-            <Navigation />
-            <Switch id="body">
+            <Navigation
+              profile={this.state.profile}
+              isLoggedIn={() => this.isLoggedIn()}
+              logout={() => this.logout()}
+              isAdmin={this.isAdmin.bind(this)}
+              isManager={this.isAdmin.bind(this)}
+            />
+            <Switch id="body-switch">
               <Route exact path="/home">
                 <Home />
               </Route>
@@ -58,7 +194,10 @@ class App extends Component {
                 <About />
               </Route>
               <Route exact path="/login-and-reg">
-                <LoginAndReg />
+                <LoginAndRegView
+                  login={() => this.login()}
+                  signup={() => this.signup()}
+                />
               </Route>
               <Route exact path="/contact">
                 <Contact />

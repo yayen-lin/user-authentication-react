@@ -282,7 +282,7 @@ exports.adminUpdateUserAction = (req, res) => {
     });
 };
 
-exports.deleteUserAction = (req, res) => {
+exports.adminDeleteUserAction = (req, res) => {
   authDB
     .adminDelete(req, res)
     .then((data) => {
@@ -305,7 +305,7 @@ exports.deleteUserAction = (req, res) => {
     });
 };
 
-exports.logoutAction = (req, res) => {
+exports.adminLogoutAction = (req, res) => {
   res.cookie("Carmax168Cookie", "logout", {
     expires: { maxAge: 2000 }, // cookie expires after 2000 ms from the time it is set.
     httpOnly: true,

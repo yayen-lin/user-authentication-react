@@ -43,7 +43,7 @@ exports.adminSignup = async (req, res, newUser) => {
     if (err) console.log(err);
     else {
       const values = [[newUser.username, hash, newUser.previlege]];
-      return await execQuery(
+      return execQuery(
         "insert",
         query,
         values,
@@ -71,7 +71,7 @@ exports.adminUpdate = async (req, res, newInfo) => {
       const values = [
         [newUser.username, hash, newUser.previlege, req.params.username],
       ];
-      return await execQuery("update", query, values);
+      return execQuery("update", query, values);
     }
   });
 
