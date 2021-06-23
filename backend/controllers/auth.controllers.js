@@ -8,6 +8,7 @@
 
 // TODO: remove console log debugging output
 
+const session = require("express-session");
 const authDB = require("../models/auth.models.js");
 const userDB = require("../models/user.models.js");
 
@@ -53,8 +54,9 @@ exports.adminLoginAction = (req, res) => {
         });
 
         // TODO: create session for logged in user.
-        req.session.user = results;
-        console.log(req.session.user);
+        var session = req.session;
+        session.user = results[0].username;
+        console.log("YOYOYO! session = ", session);
 
         // create cookie
         const cookieOptions = {
@@ -68,7 +70,7 @@ exports.adminLoginAction = (req, res) => {
         // can specify any name for cookie - insert cookie
         res.cookie("Carmax168Cookie", token, cookieOptions);
 
-        console.log(token);
+        console.log("YOYOYO! TOKEN: ", token);
         //console.log(results[0]);
 
         // TODO: user models
@@ -153,7 +155,7 @@ exports.adminSignupAction = (req, res) => {
       // can specify any name for cookie
       // need to decode the token to get username
       res.cookie("Carmax168Cookie", token, cookieOptions);
-      console.log(token);
+      console.log("YOYOYO! TOKEN: ", token);
 
       // get type
       // try {
@@ -248,7 +250,7 @@ exports.adminUpdateUserAction = (req, res) => {
       // can specify any name for cookie
       // need to decode the token to get username
       res.cookie("Carmax168Cookie", token, cookieOptions);
-      console.log(token);
+      console.log("YOYOYO! TOKEN: ", token);
 
       // get type
       // try {
@@ -324,11 +326,14 @@ exports.adminDeleteUserAction = (req, res) => {
 };
 
 exports.adminLogoutAction = (req, res) => {
+  console.log("auth.controllers - logout");
   res.cookie("Carmax168Cookie", "logout", {
     // cookie expires after 2 sec from the time it is set.
     expires: new Date(Date.now() + 2 * 1000),
     httpOnly: true,
   });
+  req.session.destroy();
+  res.clearCookie("connect.sid");
   return res.status(200).json({
     auth: false,
     message: "Successfully logged out!",

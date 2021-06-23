@@ -17,6 +17,8 @@ const bodyParser = require("body-parser");
 const cookieParser = require("cookie-parser");
 // creating session and maintaining (keeps users logged in)
 const session = require("express-session");
+// store session data in mysql
+const mysqlStore = require("express-mysql-session")(session);
 // (authentication)
 // json web token, needed for logged in users to make every api requests
 const jwt = require("jsonwebtoken");
@@ -48,14 +50,38 @@ const PORT = process.env.PORT || 3000;
 //   database: "ggdabhmy_carmax168",
 //   connectionLimit: 5,
 // });
-const sess = {
-  key: "userId", // name of the cookie we create
+
+var sessionStore = new mysqlStore({
+  // db config
+  host: "taipeinerd.com",
+  user: "ggdabhmy_admin",
+  password: process.env.DB_PASSWORD,
+  database: "ggdabhmy_carmax168",
+  // store setting
+  expiration: 1000 * 60 * 60 * 12, // session cookie expires in 12 hrs
+  createDatabaseTable: true,
+  clearExpired: true,
+  checkExpirationInterval: 900000, // clear expired session every 15 mins
+  connectionLimit: 1,
+  endConnectionOnClose: true,
+  // charset: "utf8mb4_bin",
+  schema: {
+    tableName: "sessions_table",
+    columnNames: {
+      session_id: "session_id",
+      expires: "expires",
+      data: "data",
+    },
+  },
+});
+
+// default value is { path: '/', httpOnly: true, secure: false, maxAge: null }
+const sessOptions = {
   secret: process.env.SESSION_SECRET,
   resave: false,
-  saveUninitialized: false,
-  cookie: {
-    expires: 1000 * 60 * 60 * 24, // cookie expires in 24 hrs
-  },
+  saveUninitialized: true,
+  store: sessionStore, // session data is stored in mysql db
+  cookie: { maxAge: 1000 * 60 * 60 * 12 }, // session cookie expires in 12 hrs
 };
 
 // ----------------------- init -----------------------
@@ -80,10 +106,21 @@ app.use((req, res, next) => {
 
 app.use(cookieParser());
 app.use(bodyParser.urlencoded({ extended: true }));
-app.use(session(sess));
+app.use(session(sessOptions));
 
-// Have Node serve the files for our built React app
-// app.use(express.static(path.resolve(__dirname, "../client/build")));
+// // Access the session as req.session
+// app.get("/", function (req, res, next) {
+//   if (req.session.views) {
+//     req.session.views++;
+//     res.setHeader("Content-Type", "text/html");
+//     res.write("<p>views: " + req.session.views + "</p>");
+//     res.write("<p>expires in: " + req.session.cookie.maxAge / 1000 + "s</p>");
+//     res.end();
+//   } else {
+//     req.session.views = 1;
+//     res.end("welcome to the session demo. refresh!");
+//   }
+// });
 
 // bad practice to use global in JS
 global.jwt = jwt;
@@ -200,10 +237,18 @@ global.bcrypt = bcrypt;
 const authRoutes = require("./backend/routes/auth.routes");
 app.use("/", authRoutes);
 
+// temp - TODO: remove this
+app.get("/session", function (req, res) {
+  res.json(req.session);
+});
+
 // ----------------------- production build -----------------------
 // Express only serves static assets in production
 if (process.env.NODE_ENV === "production") {
   app.use(express.static("frontend/build"));
+
+  app.set("trust proxy", 1); // trust first proxy
+  sess.cookie.secure = true; // serve secure cookies
 
   app.get("*", (req, res) => {
     res.sendFile(path.resolve(__dirname, "frontend", "build", "index.html"));
