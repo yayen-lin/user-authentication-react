@@ -121,7 +121,7 @@ class Navigation extends Component {
         <LinkContainer
           key={content}
           to={this.getRoute(content)}
-          // onClick={() => this.props.logout()}
+          onClick={() => this.props.logout()}
         >
           <Nav.Link>
             {this.getIcons(content)}
@@ -140,7 +140,8 @@ class Navigation extends Component {
   }
 
   render() {
-    let loggedIn = false;
+    let loggedIn = this.props.isLoggedIn();
+    console.log("loggedIn: ", loggedIn);
     let navbarContent = loggedIn
       ? this.state.navbarAdmin
       : this.state.navbarUser;

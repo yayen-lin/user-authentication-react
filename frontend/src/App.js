@@ -42,18 +42,21 @@ class App extends Component {
     this.setState({
       username: un,
     });
+    console.log("setUsername: ", this.state.username);
   }
 
   setToken(token) {
     this.setState({
       token: token,
     });
+    // console.log("setUsername: ", this.state.username);
   }
 
   setProfile(userInfo) {
     this.setState({
       profile: userInfo,
     });
+    console.log("setProfile: ", this.state.profile);
   }
 
   // Admin (loggedIn = true)
@@ -208,6 +211,10 @@ class App extends Component {
               {/* Redirect to home page */}
               <Route exact path="/">
                 <Redirect to="/home" />
+              </Route>
+              {/* Redirect logout to home page */}
+              <Route path="/logout">
+                <Redirect push to="/home" />
               </Route>
               {/* 404 Not Found */}
               <Route path="*">
