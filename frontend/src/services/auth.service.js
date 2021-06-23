@@ -1,5 +1,7 @@
 import request from "./request";
 
+// TODO: remove debugging console.log
+
 // send the request to the backend (PORT=8080) (see query.js)
 
 /**
@@ -9,6 +11,7 @@ import request from "./request";
  * @returns a request object
  */
 function signup(user) {
+  console.log("auth.service - signup - user = ", user);
   return request({
     url: "/signup",
     method: "POST",
@@ -22,6 +25,7 @@ function signup(user) {
 }
 
 function login(user) {
+  console.log("auth.service - login - user = ", user);
   return request({
     url: "/login",
     method: "POST",
@@ -34,6 +38,7 @@ function login(user) {
 }
 
 function editProfile(user, token) {
+  console.log("auth.service - editProfile - user = ", user);
   return request({
     url: "/" + user.username,
     method: "PUT",
@@ -50,6 +55,7 @@ function editProfile(user, token) {
 }
 
 function logout(user) {
+  console.log("auth.service - logout - user = ", user);
   return request({
     url: "/logout",
     method: "POST",

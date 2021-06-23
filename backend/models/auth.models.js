@@ -6,9 +6,12 @@
  * src: https://github.com/Scavenge-UW/Scavenge
  */
 
+// TODO: remove debugging console.log
+
 const { execQuery } = require("../query");
 
 exports.adminLogin = async (req, res, user) => {
+  console.log("auth.models - login - user = ", user);
   // User fields already validated
   const query = `
     SELECT * 
@@ -22,6 +25,7 @@ exports.adminLogin = async (req, res, user) => {
 };
 
 exports.adminGetPrivilege = async (req, res, user) => {
+  console.log("auth.models - getPrivilege - user = ", user);
   // User fields already validated
   const query = `
     SELECT privilege 
@@ -35,6 +39,7 @@ exports.adminGetPrivilege = async (req, res, user) => {
 };
 
 exports.adminSignup = async (req, res, newUser) => {
+  console.log("auth.models - signup - newUser = ", newUser);
   const saltRounds = 10;
   const query = `INSERT INTO users (username, password, privilege) VALUES ?;`;
 
@@ -54,6 +59,7 @@ exports.adminSignup = async (req, res, newUser) => {
 };
 
 exports.adminUpdate = async (req, res, newInfo) => {
+  console.log("auth.models - update - newInfo = ", newInfo);
   const saltRounds = 10;
   const query = `
     UPDATE users u
@@ -95,6 +101,7 @@ exports.adminUpdate = async (req, res, newInfo) => {
 };
 
 exports.adminDelete = async (req, res) => {
+  console.log("auth.models - delete -");
   const query = `
     DELETE FROM users
     WHERE username = ?;

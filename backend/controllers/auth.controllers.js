@@ -6,6 +6,8 @@
  * src: https://github.com/Scavenge-UW/Scavenge
  */
 
+// TODO: remove console log debugging output
+
 const authDB = require("../models/auth.models.js");
 const userDB = require("../models/user.models.js");
 
@@ -29,6 +31,7 @@ exports.adminLoginAction = (req, res) => {
   authDB
     .adminLogin(req, res, user)
     .then(async (results) => {
+      console.log("auth.controllers - login - results = ", results);
       // if result is not returned or password is incorrect after `bcrypt.compare`
       if (
         !results[0] ||
@@ -129,6 +132,8 @@ exports.adminSignupAction = (req, res) => {
   authDB
     .adminSignup(req, res, newUser)
     .then(async (data) => {
+      console.log("auth.controllers - signup - data = ", data);
+      console.log("auth.controllers - signup - newUser = ", newUser);
       // create jwt
       const token = jwt.sign(
         { username: newUser.username },
@@ -151,16 +156,16 @@ exports.adminSignupAction = (req, res) => {
       console.log(token);
 
       // get type
-      try {
-        var userType = await authDB.adminGetPrivilege(req, res, newUser);
-      } catch (error) {
-        console.log(error);
-        return res.status(500).json({
-          auth: false,
-          messsage: "User privilege lookup failed due to server error.",
-        });
-      }
-      var uType = userType[0].privilege;
+      // try {
+      //   var userType = await authDB.adminGetPrivilege(req, res, newUser);
+      // } catch (error) {
+      //   console.log(error);
+      //   return res.status(500).json({
+      //     auth: false,
+      //     messsage: "User privilege lookup failed due to server error.",
+      //   });
+      // }
+      // var uType = userType[0].privilege;
 
       // TODO: user.models
       // get employee-of status
@@ -186,7 +191,7 @@ exports.adminSignupAction = (req, res) => {
         token: token,
         profile: {
           username: newUser.username,
-          privilege: uType,
+          privilege: newUser.privilege,
         },
       });
     })
@@ -222,6 +227,8 @@ exports.adminUpdateUserAction = (req, res) => {
   authDB
     .adminUpdate(req, res, newInfo)
     .then(async (data) => {
+      console.log("auth.controllers - update - data = ", data);
+      console.log("auth.controllers - update - newInfo = ", newInfo);
       // create token and insert cookie
       const token = jwt.sign(
         { username: newInfo.username },
@@ -244,16 +251,16 @@ exports.adminUpdateUserAction = (req, res) => {
       console.log(token);
 
       // get type
-      try {
-        var userType = await authDB.adminGetPrivilege(req, res, newInfo);
-      } catch (error) {
-        console.log(error);
-        return res.status(500).json({
-          auth: true,
-          messsage: "User privilege lookup failed due to server error.",
-        });
-      }
-      var uType = userType[0].privilege;
+      // try {
+      //   var userType = await authDB.adminGetPrivilege(req, res, newInfo);
+      // } catch (error) {
+      //   console.log(error);
+      //   return res.status(500).json({
+      //     auth: true,
+      //     messsage: "User privilege lookup failed due to server error.",
+      //   });
+      // }
+      // var uType = userType[0].privilege;
 
       // // get employee-of status
       // // this will always return an empty array for signup because a new user cannot immediately be an employee
@@ -278,7 +285,7 @@ exports.adminUpdateUserAction = (req, res) => {
         token: token,
         profile: {
           username: newInfo.username,
-          privilege: uType,
+          privilege: newInfo.privilege,
         },
       });
     })
@@ -296,6 +303,7 @@ exports.adminDeleteUserAction = (req, res) => {
     .adminDelete(req, res)
     .then((data) => {
       //set cookie to user logged out
+      console.log("auth.controllers - delete - data = ", data);
       res.cookie("Carmax168Cookie", "logout", {
         // cookie expires after 2 sec from the time it is set.
         expires: new Date(Date.now() + 2 * 1000),

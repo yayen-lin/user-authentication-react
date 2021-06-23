@@ -6,6 +6,8 @@
  * src: https://github.com/Scavenge-UW/Scavenge
  */
 
+// TODO: remove debugging console.log
+
 const { promisify } = require("util");
 const { execQuery } = require("../query");
 const authDB = require("../models/user.models");
@@ -15,6 +17,7 @@ const authDB = require("../models/user.models");
  * Sets req.user to the user; otherwise, user will be null.
  */
 exports.verifyAndGetUserInfo = async (req, res, next) => {
+  console.log("auth.middleware - verifyAndGetUserInfo - req = ", req);
   if (req.cookies.jwt) {
     // async returns a promise after the await
     // verify is from jwt web tokens
@@ -89,6 +92,7 @@ exports.verifyAndGetUserInfo = async (req, res, next) => {
 };
 
 exports.requireLogin = async (req, res, next) => {
+  console.log("auth.middleware - requireLogin - req = ", req);
   if (req.user) {
     next();
   } else {
