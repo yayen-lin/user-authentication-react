@@ -18,7 +18,7 @@ function signup(user) {
     data: {
       username: user.username,
       password: user.password,
-      previlege: user.previlege,
+      privilege: user.privilege,
     },
     withCredentials: true,
   });
@@ -45,7 +45,7 @@ function editProfile(user, token) {
     data: {
       username: user.username,
       password: user.password,
-      previlege: user.previlege,
+      privilege: user.privilege,
     },
     headers: {
       Authorization: `Bearer ${token}`,

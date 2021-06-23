@@ -47,7 +47,7 @@ exports.adminSignup = async (req, res, newUser) => {
   await bcrypt.hash(newUser.password, saltRounds, (err, hash) => {
     if (err) console.log(err);
     else {
-      const values = [[newUser.username, hash, newUser.previlege]];
+      const values = [[newUser.username, hash, newUser.privilege]];
       return execQuery(
         "insert",
         query,
@@ -66,7 +66,7 @@ exports.adminUpdate = async (req, res, newInfo) => {
     SET 
       username = ?,
       password = ?,
-      previlege = ?,
+      privilege = ?,
     WHERE u.username = ?;
   `;
 
@@ -75,7 +75,7 @@ exports.adminUpdate = async (req, res, newInfo) => {
     if (err) console.log(err);
     else {
       const values = [
-        [newUser.username, hash, newUser.previlege, req.params.username],
+        [newUser.username, hash, newUser.privilege, req.params.username],
       ];
       return execQuery("update", query, values);
     }

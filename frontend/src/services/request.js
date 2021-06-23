@@ -11,7 +11,7 @@ const client = axios.create({
 
 // TODO: remove debugging console.log
 const request = function (options) {
-  console.log("request.js - request");
+  console.log("request.js - request - options = ", options);
   const onSuccess = function (response) {
     console.debug("Request Successful!", response);
     return response.data;

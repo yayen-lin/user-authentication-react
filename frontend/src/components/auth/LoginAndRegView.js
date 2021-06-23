@@ -87,7 +87,7 @@ class LoginAndRegView extends Component {
     const user = {
       username: this.state.usernameSignup,
       password: this.state.passwordSignup,
-      privilege: 0, // on signup, privilege set to 0 (can be changed by admin)
+      privilege: "0", // on signup, privilege set to 0 (can be changed by admin)
     };
 
     let errors = [];
