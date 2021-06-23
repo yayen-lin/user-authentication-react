@@ -55,7 +55,10 @@ exports.adminLoginAction = (req, res) => {
 
         // create cookie
         const cookieOptions = {
-          expires: { maxAge: 360000 }, // cookie expires after 360000 ms from the time it is set.
+          // cookie expires after 90 mins from the time it is set.
+          expires: new Date(
+            Date.now() + process.env.JWT_COOKIE_EXPIRES * 60 * 1000
+          ),
           httpOnly: true,
         };
 
@@ -135,7 +138,10 @@ exports.adminSignupAction = (req, res) => {
 
       // create cookie
       const cookieOptions = {
-        expires: { maxAge: 360000 }, // cookie expires after 360000 ms from the time it is set.
+        // cookie expires after 90 mins from the time it is set.
+        expires: new Date(
+          Date.now() + process.env.JWT_COOKIE_EXPIRES * 60 * 1000
+        ),
         httpOnly: true,
       };
 
@@ -225,7 +231,10 @@ exports.adminUpdateUserAction = (req, res) => {
 
       // create cookie
       const cookieOptions = {
-        expires: { maxAge: 360000 }, // cookie expires after 360000 ms from the time it is set.
+        // cookie expires after 90 mins from the time it is set.
+        expires: new Date(
+          Date.now() + process.env.JWT_COOKIE_EXPIRES * 60 * 1000
+        ),
         httpOnly: true,
       };
 
@@ -288,7 +297,8 @@ exports.adminDeleteUserAction = (req, res) => {
     .then((data) => {
       //set cookie to user logged out
       res.cookie("Carmax168Cookie", "logout", {
-        expires: { maxAge: 2000 }, // cookie expires after 2000 ms from the time it is set.
+        // cookie expires after 2 sec from the time it is set.
+        expires: new Date(Date.now() + 2 * 1000),
         httpOnly: true,
       });
 
@@ -307,7 +317,8 @@ exports.adminDeleteUserAction = (req, res) => {
 
 exports.adminLogoutAction = (req, res) => {
   res.cookie("Carmax168Cookie", "logout", {
-    expires: { maxAge: 2000 }, // cookie expires after 2000 ms from the time it is set.
+    // cookie expires after 2 sec from the time it is set.
+    expires: new Date(Date.now() + 2 * 1000),
     httpOnly: true,
   });
   return res.status(200).json({

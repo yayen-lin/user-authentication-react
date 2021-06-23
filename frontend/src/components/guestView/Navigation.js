@@ -1,7 +1,7 @@
 import React, { Component } from "react";
 
 // imports for bootstrap
-import Row from "react-bootstrap/Row";
+// import Row from "react-bootstrap/Row";
 import Nav from "react-bootstrap/Nav";
 import Navbar from "react-bootstrap/Navbar";
 import Container from "react-bootstrap/Container";
@@ -12,13 +12,13 @@ import { BsGift } from "react-icons/bs";
 import { IoHomeOutline } from "react-icons/io5";
 import {
   FiUser,
-  FiEdit,
+  // FiEdit,
   FiLogIn,
   FiLogOut,
-  FiSearch,
+  // FiSearch,
   FiUserPlus,
   FiClipboard,
-  FiHelpCircle,
+  // FiHelpCircle,
   FiShoppingCart,
 } from "react-icons/fi";
 

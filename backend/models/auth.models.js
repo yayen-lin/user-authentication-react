@@ -12,7 +12,7 @@ exports.adminLogin = async (req, res, user) => {
   // User fields already validated
   const query = `
     SELECT * 
-    FROM user
+    FROM users
     WHERE username = ?;
   `;
   var values = [[user.username]];
@@ -25,7 +25,7 @@ exports.adminGetPrivilege = async (req, res, user) => {
   // User fields already validated
   const query = `
     SELECT privilege 
-    FROM user
+    FROM users
     WHERE username = ?;
   `;
   var values = [[user.username]];
@@ -56,7 +56,7 @@ exports.adminSignup = async (req, res, newUser) => {
 exports.adminUpdate = async (req, res, newInfo) => {
   const saltRounds = 10;
   const query = `
-    UPDATE user u
+    UPDATE users u
     SET 
       username = ?,
       password = ?,
@@ -96,7 +96,7 @@ exports.adminUpdate = async (req, res, newInfo) => {
 
 exports.adminDelete = async (req, res) => {
   const query = `
-    DELETE FROM user
+    DELETE FROM users
     WHERE username = ?;
   `;
   const values = [[req.params.username]];

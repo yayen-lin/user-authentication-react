@@ -27,7 +27,7 @@ exports.verifyAndGetUserInfo = async (req, res, next) => {
 
     // 2. check if the user still exists and get user info from DB
     const query = `
-      SELECT * FROM user WHERE username = ?;
+      SELECT * FROM users WHERE username = ?;
     `;
     execQuery("select", query, [decoded.username])
       .then(async (result) => {
@@ -62,7 +62,7 @@ exports.verifyAndGetUserInfo = async (req, res, next) => {
       } else {
         // user is signed in, but we need to check if the username still exists
         const query = `
-          SELECT * FROM user WHERE username = ?;
+          SELECT * FROM users WHERE username = ?;
         `;
         execQuery("select", query, [decoded.username])
           .then(async (result) => {

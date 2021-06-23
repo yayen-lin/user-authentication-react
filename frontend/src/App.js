@@ -11,6 +11,7 @@ import {
 // imports for action notification
 // reference: https://fkhadra.github.io/react-toastify/introduction
 import { ToastContainer, toast } from "react-toastify";
+import "react-toastify/dist/ReactToastify.css";
 
 // auth
 import AuthService from "./services/auth.service";

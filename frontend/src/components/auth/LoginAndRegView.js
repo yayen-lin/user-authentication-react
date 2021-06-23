@@ -65,8 +65,8 @@ class LoginAndRegView extends Component {
     };
 
     if (
-      this.state.usernameLogin.length == 0 ||
-      this.state.passwordLogin.length == 0
+      this.state.usernameLogin.length === 0 ||
+      this.state.passwordLogin.length === 0
     ) {
       toast.error("Username or password field is empty.");
       return;
@@ -87,28 +87,24 @@ class LoginAndRegView extends Component {
     const user = {
       username: this.state.usernameSignup,
       password: this.state.passwordSignup,
-      privilege: this.state.privilegeSignup,
+      privilege: 0, // on signup, privilege set to 0 (can be changed by admin)
     };
 
     let errors = [];
 
-    if (this.state.username.length == 0) {
+    if (!this.state.usernameSignup || this.state.usernameSignup.length === 0) {
       errors.push("Username field is empty");
     }
 
-    if (this.state.password.length == 0) {
+    if (!this.state.passwordSignup || this.state.passwordSignup.length === 0) {
       errors.push("Password field is empty");
     }
 
-    if (this.state.privilege.length == 0) {
-      errors.push("privilege field is empty");
-    }
-
-    if (errors.length != 0) {
+    if (errors.length !== 0) {
       toast.error(
         <ul>
           {errors.map((er) => {
-            return <li>{er}</li>;
+            return <li key={er}>{er}</li>;
           })}
         </ul>
       );
@@ -141,7 +137,7 @@ class LoginAndRegView extends Component {
               <FormControl
                 required
                 id="username-login-form"
-                type="text"
+                type={"text"}
                 value={this.state.usernameLogin}
                 placeholder="Username"
                 onChange={(e) => this.setUsernameLogin(e.target.value)}
@@ -163,7 +159,7 @@ class LoginAndRegView extends Component {
               <FormControl
                 required
                 id="password-login-form"
-                type="password"
+                type={"password"}
                 value={this.state.passwordLogin}
                 placeholder="Password"
                 onChange={(e) => this.setPasswordLogin(e.target.value)}
@@ -257,6 +253,8 @@ class LoginAndRegView extends Component {
   }
 
   render() {
+    if (this.state.toHomeView === true) return <Redirect to="/" />;
+
     return (
       <Container>
         <h2 className="mt-3">Login</h2>

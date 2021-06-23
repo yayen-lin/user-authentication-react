@@ -64,19 +64,15 @@ app.use(express.json());
 // app.use(cors(corsOptions));
 // app.use(cors());
 app.use((req, res, next) => {
+  const allowedOrigins = ["https://www.carmax168.com", "http://localhost:8081"];
   const origin = req.headers.origin;
-  const allowedOrigins = [
-    "https://www.carmax168.com",
-    "http://localhost:" + PORT,
-  ];
   if (allowedOrigins.includes(origin)) {
     res.setHeader("Access-Control-Allow-Origin", origin);
   }
   res.header(
     "Access-Control-Allow-Headers",
-    "Origin, X-Requested-With, Content-Type, Accept, Authorization"
+    "x-access-token, Origin, X-Requested-With, Content-Type, Accept, Authorization"
   );
-  res.header("Access-Control-Allow-Credentials", true);
   res.header("Access-Control-Allow-Methods", "GET, PUT, POST, DELETE, OPTIONS");
   res.header("Access-Control-Allow-Credentials", true);
   next();
