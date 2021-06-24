@@ -1,6 +1,20 @@
-# carmax168
+# Carmax168
 Jason's company web app.
 - [click me to go to carmax168 🚀🚀](https://www.carmax168.com)
+
+# Design
+- a fully editable site where a logged in manager/admin can edit all the info & Q&A displayed on the site.
+- an admin can add/remove a manager.
+- both admin and the manager are able to edit the information on the website.
+
+# Design Detail
+- if a user is not logged in, he/she uses the website like a normal user;
+- if a user is logged in, every page on the site where the page contains important information will be editable, those information will be stored in the database (mysql).
+- **user type**
+  - admin: 1 (have full access)
+  - manager: 0 (have limited access)
+  - user: 2 (not logged in)
+
 
 # Getting Started with Create React App
 
