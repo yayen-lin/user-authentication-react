@@ -11,8 +11,10 @@ const {
 
 const authMiddleware = require("../middleware/auth.middleware");
 
+// login
 router.route("/login").post(adminLoginAction);
 
+// logout
 router
   .route("/logout")
   .post(
@@ -21,8 +23,10 @@ router
     adminLogoutAction
   );
 
+// sign up
 router.route("/signup").post(adminSignupAction);
 
+// update and delete users
 router
   .route("/:username")
   .put(

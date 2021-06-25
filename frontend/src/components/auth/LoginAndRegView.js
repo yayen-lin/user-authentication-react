@@ -79,6 +79,8 @@ class LoginAndRegView extends Component {
         toHomeView: true,
       });
     }
+
+    console.log("user: ", user);
   }
 
   async onHandleSignup(e) {

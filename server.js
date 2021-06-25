@@ -24,32 +24,15 @@ const mysqlStore = require("express-mysql-session")(session);
 const jwt = require("jsonwebtoken");
 
 // ----------------------- settings -----------------------
-const PORT = process.env.PORT || 3000;
-// const corsOptions = {
-//   // access-control-allow-origin
-//   origin: [
-//     "https://www.carmax168.com",
-//     "http://localhost:8081",
-//     // "http://localhost:" + PORT,
-//   ],
-//   methods: ["GET", "PUT", "POST", "DELETE"],
-//   allowedHeaders: [
-//     "Content-Type",
-//     "Authorization",
-//     "Origin",
-//     "X-Requested-With",
-//     "Accept",
-//     "X-Access-Token",
-//   ],
-//   credentials: true, // allowing cookie to be enabled (access-control-allow-credentials)
-// };
-// const db = mysql.createPool({
-//   host: "taipeinerd.com",
-//   user: "ggdabhmy_admin",
-//   password: process.env.DB_PASSWORD,
-//   database: "ggdabhmy_carmax168",
-//   connectionLimit: 5,
-// });
+// default env setting
+const {
+  PORT = 3000,
+  SESSION_NAME = "sid",
+  SESSION_LIFETIME = 2, // two hours
+  NODE_ENV = "development",
+} = process.env;
+
+const IN_PROD = NODE_ENV === "production";
 
 var sessionStore = new mysqlStore({
   // db config
@@ -77,11 +60,16 @@ var sessionStore = new mysqlStore({
 
 // default value is { path: '/', httpOnly: true, secure: false, maxAge: null }
 const sessOptions = {
+  name: process.env.SESSION_NAME,
   secret: process.env.SESSION_SECRET,
-  resave: false,
-  saveUninitialized: true,
+  resave: false, // not to store the session back to storage if they were never modified in the request
+  saveUninitialized: false, // not to save any uninitialized session that has no data
   store: sessionStore, // session data is stored in mysql db
-  cookie: { maxAge: 1000 * 60 * 60 * 12 }, // session cookie expires in 12 hrs
+  cookie: {
+    maxAge: 1000 * 60 * 60 * process.env.SESSION_LIFETIME,
+    sameSite: true, // or 'strict', same effect
+    secure: IN_PROD,
+  }, // session cookie expires in 12 hrs
 };
 
 // ----------------------- init -----------------------
@@ -108,47 +96,16 @@ app.use(cookieParser());
 app.use(bodyParser.urlencoded({ extended: true }));
 app.use(session(sessOptions));
 
-// // Access the session as req.session
-// app.get("/", function (req, res, next) {
-//   if (req.session.views) {
-//     req.session.views++;
-//     res.setHeader("Content-Type", "text/html");
-//     res.write("<p>views: " + req.session.views + "</p>");
-//     res.write("<p>expires in: " + req.session.cookie.maxAge / 1000 + "s</p>");
-//     res.end();
-//   } else {
-//     req.session.views = 1;
-//     res.end("welcome to the session demo. refresh!");
-//   }
-// });
-
 // bad practice to use global in JS
 global.jwt = jwt;
 global.bcrypt = bcrypt;
 
 // ----------------------- configuring -----------------------
 
-// app.post("/register", (req, res) => {
-//   const username = req.body.username;
-//   const password = req.body.password;
-//   const privilege = req.body.privilege;
-
-//   bcrypt.hash(password, saltRounds, (err, hash) => {
-//     if (err) {
-//       console.log(err);
-//     }
-//     db.query(
-//       "INSERT INTO users (username, password, privilege) VALUES (?, ?, ?);",
-//       [username, hash, privilege],
-//       (err, result) => {
-//         console.log(err);
-//       }
-//     );
-//   });
-// });
-
 // const verifyJWT = (req, res, next) => {
-//   const token = req.headers["x-access-token"]; // grabbing token from header
+//   console.log("req = ", req);
+//   console.log("res = ", res);
+//   const token = req.headers["x-access-token"] || req.headers["authorization"]; // grabbing token from header
 
 //   if (!token) {
 //     res.send("Yo, we need a token, please give it to us next time!");
@@ -244,7 +201,7 @@ app.get("/session", function (req, res) {
 
 // ----------------------- production build -----------------------
 // Express only serves static assets in production
-if (process.env.NODE_ENV === "production") {
+if (IN_PROD) {
   app.use(express.static("frontend/build"));
 
   app.set("trust proxy", 1); // trust first proxy
