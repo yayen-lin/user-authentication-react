@@ -7,6 +7,7 @@
  */
 
 // TODO: remove console log debugging output
+// TODO: return json auth needs to be re-determined
 
 const session = require("express-session");
 const authDB = require("../models/auth.models.js");
@@ -54,9 +55,8 @@ exports.adminLoginAction = (req, res) => {
         });
 
         // TODO: create session for logged in user.
-        var session = req.session;
-        session.user = results[0].username;
-        console.log("YOYOYO! session = ", session);
+        req.session.user = results[0].username;
+        console.log("YOYOYO! session = ", req.session);
 
         // create cookie
         const cookieOptions = {
@@ -68,9 +68,10 @@ exports.adminLoginAction = (req, res) => {
         };
 
         // can specify any name for cookie - insert cookie
-        res.cookie("Carmax168Cookie", token, cookieOptions);
+        res.cookie("Carmax168_cookie", token, cookieOptions);
 
         console.log("YOYOYO! TOKEN: ", token);
+
         //console.log(results[0]);
 
         // TODO: user models
@@ -154,7 +155,7 @@ exports.adminSignupAction = (req, res) => {
 
       // can specify any name for cookie
       // need to decode the token to get username
-      res.cookie("Carmax168Cookie", token, cookieOptions);
+      res.cookie("Carmax168_cookie", token, cookieOptions);
       console.log("YOYOYO! TOKEN: ", token);
 
       // get type
@@ -249,7 +250,7 @@ exports.adminUpdateUserAction = (req, res) => {
 
       // can specify any name for cookie
       // need to decode the token to get username
-      res.cookie("Carmax168Cookie", token, cookieOptions);
+      res.cookie("Carmax168_cookie", token, cookieOptions);
       console.log("YOYOYO! TOKEN: ", token);
 
       // get type
@@ -306,7 +307,7 @@ exports.adminDeleteUserAction = (req, res) => {
     .then((data) => {
       //set cookie to user logged out
       console.log("auth.controllers - delete - data = ", data);
-      res.cookie("Carmax168Cookie", "logout", {
+      res.cookie("Carmax168_cookie", "logout", {
         // cookie expires after 2 sec from the time it is set.
         expires: new Date(Date.now() + 2 * 1000),
         httpOnly: true,
@@ -327,13 +328,20 @@ exports.adminDeleteUserAction = (req, res) => {
 
 exports.adminLogoutAction = (req, res) => {
   console.log("auth.controllers - logout");
-  res.cookie("Carmax168Cookie", "logout", {
+  res.cookie("Carmax168_cookie", "logout", {
     // cookie expires after 2 sec from the time it is set.
     expires: new Date(Date.now() + 2 * 1000),
     httpOnly: true,
   });
-  req.session.destroy();
-  res.clearCookie("connect.sid");
+  req.session.destroy((err) => {
+    if (err) {
+      return res.status(200).json({
+        auth: true,
+        message: "Failed to destroy session during logout",
+      });
+    }
+    res.clearCookie(process.env.SESSION_NAME);
+  });
   return res.status(200).json({
     auth: false,
     message: "Successfully logged out!",
