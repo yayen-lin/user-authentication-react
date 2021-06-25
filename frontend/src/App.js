@@ -18,7 +18,7 @@ import AuthService from "./services/auth.service";
 import LoginAndRegView from "./components/auth/LoginAndRegView";
 
 // admin
-// import Profile from "./components/admin/Profile";
+import Profile from "./components/admin/Profile";
 
 // guest views
 import Home from "./components/guestView/Home";
@@ -105,6 +105,8 @@ class App extends Component {
         toast.error(response.message);
         return -1;
       } else {
+        console.log(response);
+        console.log(user);
         this.setUsername(response.username);
         this.setToken(response.token);
         this.setProfile(response.profile);
@@ -132,9 +134,14 @@ class App extends Component {
         toast.error(response.message);
         return -1;
       } else {
+        console.log(response);
+        console.log(user);
         this.setUsername(response.username);
         this.setToken(response.token);
         this.setProfile(response.profile);
+
+        // store user details and jwt token in local storage to keep user logged in between page refreshes
+        localStorage.setItem("user", user.username);
 
         // We only need to import toast in other components
         // if we want to make a notification there.
@@ -150,9 +157,13 @@ class App extends Component {
       if (response.error) {
         toast.error(response.message);
       } else {
+        console.log(response);
         this.setUsername("");
         this.setToken("");
         this.setProfile("");
+
+        // remove user from local storage to log user out
+        localStorage.removeItem("user");
 
         toast.info("👋 You are logged out. See you again!");
       }
@@ -206,6 +217,12 @@ class App extends Component {
               </Route>
               <Route exact path="/contact">
                 <Contact />
+              </Route>
+              <Route exact path="/profile">
+                <Profile
+                  isLoggedIn={() => this.isLoggedIn()}
+                  profile={this.state.profile}
+                />
               </Route>
 
               {/* Redirect to home page */}
