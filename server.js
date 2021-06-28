@@ -1,3 +1,10 @@
+/**
+ * server.js - where backend is, starting of our backend
+ *
+ * @version 1.0.0
+ * @author [Yayen Lin](https://github.com/yayen-lin)
+ */
+
 // ----------------------- requires dependencies -----------------------
 const path = require("path");
 const express = require("express");

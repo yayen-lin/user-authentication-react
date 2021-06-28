@@ -1,5 +1,7 @@
 import "./App.css";
 import React, { Component } from "react";
+
+// react router
 import {
   BrowserRouter as Router,
   Switch,
@@ -12,6 +14,10 @@ import {
 // reference: https://fkhadra.github.io/react-toastify/introduction
 import { ToastContainer, toast } from "react-toastify";
 import "react-toastify/dist/ReactToastify.css";
+
+// react-redux
+import store from "./store";
+import { Provider } from "react-redux";
 
 // auth
 import AuthService from "./services/auth.service";
@@ -35,7 +41,28 @@ class App extends Component {
       username: "",
       token: "",
       profile: "",
+      loginStatus: "",
     };
+  }
+
+  componentDidMount() {
+    this.checkIfLoggedIn();
+  }
+
+  checkIfLoggedIn() {
+    console.log("CHECK IF LOGGED IN");
+    let username = localStorage.getItem("user");
+    if (username) {
+      console.log(username, "CALL isLoggedIn()");
+      AuthService.isLoggedIn(username).then((response) => {
+        console.log("response isLoggedIn()");
+        if (response.error) {
+          console.log(response.message);
+        } else {
+          console.log(response);
+        }
+      });
+    } else console.log("NOT LOGGED IN");
   }
 
   setUsername(un) {
@@ -128,6 +155,7 @@ class App extends Component {
    * @returns 0 if login successful, -1 if login failure
    */
   async login(user) {
+    console.log("App.js - login - store.getState() = ", store.getState());
     return AuthService.login(user).then((response) => {
       if (response.message) {
         // When the API returns `message`, that means the login has failed
@@ -148,6 +176,18 @@ class App extends Component {
         toast.success("🚀 Successfully logged in!");
 
         return 0;
+      }
+    });
+  }
+
+  async isAuth(user, token) {
+    return AuthService.isAuth(user, token).then((response) => {
+      if (response.error) {
+        console.log("AN ERROR OCCURRED WHILE ISAUTH WAS CALLED");
+        toast.error(response.message);
+      } else {
+        console.log(response);
+        console.log("ISAUTH WAS JUST CALLED");
       }
     });
   }
@@ -175,72 +215,76 @@ class App extends Component {
   //    https://www.pluralsight.com/guides/how-to-set-react-router-default-route-redirect-to-home
   render() {
     return (
-      <div id="body-div">
-        <Router>
-          <ToastContainer
-            position="top-right"
-            autoClose={3000} // set to 3 sec
-            hideProgressBar={false}
-            newestOnTop={false}
-            closeOnClick
-            rtl={false}
-            pauseOnFocusLoss
-            draggable
-            pauseOnHover
-          />
-          <div>
-            <Navigation
-              profile={this.state.profile}
-              isLoggedIn={() => this.isLoggedIn()}
-              logout={() => this.logout()}
-              isAdmin={this.isAdmin.bind(this)}
-              isManager={this.isAdmin.bind(this)}
+      <Provider store={store}>
+        <div id="body-div">
+          <Router>
+            <ToastContainer
+              position="top-right"
+              autoClose={3000} // set to 3 sec
+              hideProgressBar={false}
+              newestOnTop={false}
+              closeOnClick
+              rtl={false}
+              pauseOnFocusLoss
+              draggable
+              pauseOnHover
             />
-            <Switch id="body-switch">
-              <Route exact path="/home">
-                <Home />
-              </Route>
-              <Route exact path="/help">
-                <Help />
-              </Route>
-              <Route exact path="/form">
-                <GuestForm />
-              </Route>
-              <Route exact path="/about">
-                <About />
-              </Route>
-              <Route exact path="/login-and-reg">
-                <LoginAndRegView
-                  login={(user) => this.login(user)}
-                  signup={(user) => this.signup(user)}
-                />
-              </Route>
-              <Route exact path="/contact">
-                <Contact />
-              </Route>
-              <Route exact path="/profile">
-                <Profile
-                  isLoggedIn={() => this.isLoggedIn()}
-                  profile={this.state.profile}
-                />
-              </Route>
+            <div>
+              <Navigation
+                profile={this.state.profile}
+                isLoggedIn={() => this.isLoggedIn()}
+                logout={() => this.logout()}
+                isAdmin={this.isAdmin.bind(this)}
+                isManager={this.isAdmin.bind(this)}
+              />
+              <Switch id="body-switch">
+                <Route exact path="/home">
+                  <Home />
+                </Route>
+                <Route exact path="/help">
+                  <Help />
+                </Route>
+                <Route exact path="/form">
+                  <GuestForm />
+                </Route>
+                <Route exact path="/about">
+                  <About />
+                </Route>
+                <Route exact path="/login-and-reg">
+                  <LoginAndRegView
+                    login={(user) => this.login(user)}
+                    signup={(user) => this.signup(user)}
+                  />
+                </Route>
+                <Route exact path="/contact">
+                  <Contact />
+                </Route>
+                <Route exact path="/profile">
+                  <Profile
+                    isLoggedIn={() => this.isLoggedIn()}
+                    profile={this.state.profile}
+                    token={this.state.token}
+                    isAuth={(user, token) => this.isAuth(user, token)}
+                  />
+                </Route>
 
-              {/* Redirect to home page */}
-              <Route exact path="/">
-                <Redirect to="/home" />
-              </Route>
-              {/* Redirect logout to home page */}
-              <Route path="/logout">
-                <Redirect push to="/home" />
-              </Route>
-              {/* 404 Not Found */}
-              <Route path="*">
-                <div>404 Not Found</div>
-              </Route>
-            </Switch>
-          </div>
-        </Router>
-      </div>
+                {/* Redirect to home page */}
+                <Route exact path="/">
+                  <Redirect to="/home" />
+                </Route>
+                {/* Redirect logout to home page */}
+                <Route path="/logout">
+                  <Redirect push to="/home" />
+                </Route>
+                {/* 404 Not Found */}
+                <Route path="*">
+                  <div>404 Not Found</div>
+                </Route>
+              </Switch>
+            </div>
+          </Router>
+        </div>
+      </Provider>
     );
   }
 }
