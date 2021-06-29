@@ -79,8 +79,6 @@ class LoginAndRegView extends Component {
         toHomeView: true,
       });
     }
-
-    console.log("user: ", user);
   }
 
   async onHandleSignup(e) {
@@ -112,12 +110,17 @@ class LoginAndRegView extends Component {
       );
     } else {
       let signupResult = await this.props.signup(user);
-      if (signupResult === 0) {
-        // Successful signup
-        this.setState({
-          toHomeView: true,
-        });
-      }
+      // clear fields upon successful signup
+      this.setState({
+        usernameSignup: "",
+        passwordSignup: "",
+      });
+      // if (signupResult === 0) {
+      //   // Successful signup
+      //   this.setState({
+      //     toHomeView: true,
+      //   });
+      // }
     }
 
     // clear form after signup btn is clicked
@@ -255,7 +258,10 @@ class LoginAndRegView extends Component {
   }
 
   render() {
-    if (this.state.toHomeView === true) return <Redirect to="/" />;
+    // redirect to home view upon login successful
+    if (this.props.isLoggedIn()) return <Redirect to="/" />;
+    // redirect to home view if already logged in
+    // if (AuthService.currentUserValue) return <Redirect to="/" />;
 
     return (
       <Container>

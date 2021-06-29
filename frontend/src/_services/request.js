@@ -26,6 +26,8 @@ const request = function (options) {
   if (options.headers)
     isLoggedIn = options.headers["Authorization"] === "Bearer"; // TODO: change to starts with?
 
+  console.log("isLoggedIn = ", isLoggedIn ? "true" : "false");
+
   console.log("request.js - request - options = ", options);
 
   // handling response on success

@@ -11,8 +11,10 @@ import {
   Redirect,
 } from "react-router-dom";
 // import { history } from "./_helpers/history";
+// import { PrivateRoute } from "./_components/PrivateRoute";
+
+// service
 import AuthService from "./_services/auth.service";
-import { PrivateRoute } from "./_components/PrivateRoute";
 
 // imports for action notification
 // reference: https://fkhadra.github.io/react-toastify/introduction
@@ -42,42 +44,44 @@ class App extends Component {
   constructor(props) {
     super(props);
     this.state = {
-      username: "",
-      token: "",
-      profile: "",
-      loginStatus: "",
       currentUser: "",
+      username: "",
     };
   }
 
   componentDidMount() {
-    this.checkIfLoggedIn();
-    console.log("x = ", this.state.currentUser);
+    this.getCurrentUser();
   }
 
-  checkIfLoggedIn() {
-    AuthService.currentUser.subscribe((x) => this.setState({ currentUser: x }));
+  setToLoggedIn(resData) {
+    if (resData)
+      this.setState({ currentUser: resData, username: resData.username });
   }
 
-  setUsername(un) {
-    this.setState({
-      username: un,
+  setToLoggedOut() {
+    this.setState({ currentUser: "", username: "" });
+  }
+
+  getCurrentUser() {
+    AuthService.currentUser.subscribe((x) => {
+      let resData = null;
+      try {
+        resData = JSON.parse(x);
+      } catch (e) {
+        resData = x;
+      }
+
+      // console.log("resData = ", resData);
+      this.setToLoggedIn(resData);
     });
-    console.log("setUsername: ", this.state.username);
   }
 
-  setToken(token) {
-    this.setState({
-      token: token,
-    });
-    // console.log("setUsername: ", this.state.username);
-  }
-
-  setProfile(userInfo) {
-    this.setState({
-      profile: userInfo,
-    });
-    console.log("setProfile: ", this.state.profile);
+  // visitor (if not logged in)
+  // If the state is logged in, the profile is not empty and will have the logged in user info
+  // else this user is a visitor
+  isLoggedIn() {
+    if (this.state.currentUser) return true;
+    return false;
   }
 
   // Admin (loggedIn = true)
@@ -86,7 +90,9 @@ class App extends Component {
   // - has access to manage site managers and admins
   // - can do simple edition to the site (e.g. update site info)
   isAdmin() {
-    return this.state.profile.privilege === 1;
+    if (this.isLoggedIn())
+      return this.state.currentUser.profile.privilege.toString() === "1";
+    return false;
   }
 
   // Manager (loggedIn = true)
@@ -95,14 +101,9 @@ class App extends Component {
   // - has no access to manage site managers and admins
   // - can do simple edition to the site (e.g. update site info)
   isManager() {
-    return this.state.profile.privilege === 0;
-  }
-
-  // visitor (if not logged in)
-  // If the state is logged in, the profile is not empty and will have the logged in user info
-  // else this user is a visitor
-  isLoggedIn() {
-    return this.state.profile !== "";
+    if (this.isLoggedIn())
+      return this.state.currentUser.profile.privilege.toString() === "0";
+    return false;
   }
 
   /**
@@ -128,9 +129,9 @@ class App extends Component {
       } else {
         console.log(response);
         console.log(user);
-        this.setUsername(response.username);
-        this.setToken(response.token);
-        this.setProfile(response.profile);
+        // this.setUsername(response.username);
+        // this.setToken(response.token);
+        // this.setProfile(response.profile);
 
         // We only need to import toast in other components
         // if we want to make a notification there.
@@ -158,9 +159,12 @@ class App extends Component {
       } else {
         console.log(response);
         console.log(user);
-        this.setUsername(response.username);
-        this.setToken(response.token);
-        this.setProfile(response.profile);
+        this.setToLoggedIn(response);
+        // this.setToLoginStatus(
+        //   response.username,
+        //   response.token,
+        //   response.profile
+        // );
 
         // We only need to import toast in other components
         // if we want to make a notification there.
@@ -189,9 +193,7 @@ class App extends Component {
         toast.error(response.message);
       } else {
         console.log(response);
-        this.setUsername("");
-        this.setToken("");
-        this.setProfile("");
+        this.setToLoggedOut();
         toast.info("👋 You are logged out. See you again!");
       }
     });
@@ -218,11 +220,11 @@ class App extends Component {
             />
             <div>
               <Navigation
-                profile={this.state.profile}
+                username={this.state.username}
                 isLoggedIn={() => this.isLoggedIn()}
                 logout={() => this.logout()}
-                isAdmin={this.isAdmin.bind(this)}
-                isManager={this.isAdmin.bind(this)}
+                isAdmin={() => this.isAdmin()}
+                isManager={() => this.isManager()}
               />
               <Switch id="body-switch">
                 <Route exact path="/home">
@@ -241,36 +243,33 @@ class App extends Component {
                   <LoginAndRegView
                     login={(user) => this.login(user)}
                     signup={(user) => this.signup(user)}
+                    isLoggedIn={() => this.isLoggedIn()}
                   />
                 </Route>
                 <Route exact path="/contact">
                   <Contact />
                 </Route>
-                <PrivateRoute exact path="/profile">
+                <Route exact path={"/profile/:" + this.state.username}>
                   <Profile
+                    currentUser={this.state.currentUser}
                     isLoggedIn={() => this.isLoggedIn()}
-                    profile={this.state.profile}
-                    token={this.state.token}
                     isAuth={(user, token) => this.isAuth(user, token)}
                   />
-                </PrivateRoute>
-                <PrivateRoute exact path="/staff-manager">
+                </Route>
+                <Route exact path={"/staff-manager/:" + this.state.username}>
                   <StaffManager
+                    currentUser={this.state.currentUser}
+                    isAdmin={() => this.isAdmin()}
                     isLoggedIn={() => this.isLoggedIn()}
-                    privilege={this.state.profile.privilege}
-                    username={this.state.profile.username}
-                    profile={this.state.profile}
-                    token={this.state.token}
-                    isAuth={(user, token) => this.isAuth(user, token)}
                   />
-                </PrivateRoute>
+                </Route>
 
                 {/* Redirect to home page */}
                 <Route exact path="/">
                   <Redirect to="/home" />
                 </Route>
                 {/* Redirect logout to home page */}
-                <Route path="/logout">
+                <Route exact path="/logout">
                   <Redirect push to="/home" />
                 </Route>
                 {/* 404 Not Found */}

@@ -231,7 +231,6 @@ exports.adminSignupAction = (req, res) => {
 
       return res.status(200).json({
         auth: false,
-        message: "You have successfully signed up.",
         // username: newUser.username,
         // token: token,
         // profile: {

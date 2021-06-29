@@ -1,9 +1,9 @@
 import request from "./request";
-import { authHeader } from "../helpers";
+import { authHeader } from "../_helpers/auth-header";
 
 // TODO: remove debugging console.log
 
-export const UserService = {
+const UserService = {
   // login,
   // logout,
   // register,
@@ -20,6 +20,7 @@ async function getAll() {
   });
 }
 
+export default UserService;
 // async function login(username, password) {
 //   console.log("user.service - login - username = ", username);
 //   console.log("user.service - login - password = ", password);

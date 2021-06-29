@@ -40,7 +40,7 @@ function login(userinfo) {
     withCredentials: true,
   }).then((resData) => {
     // store user details and jwt token in local storage to keep user logged in between page refreshes
-    localStorage.setItem("currentUser", JSON.stringify(resData.username));
+    localStorage.setItem("currentUser", JSON.stringify(resData));
     currentUserSubject.next(resData); // TODO: this stores username and token in the Subject
 
     return resData;
@@ -87,8 +87,8 @@ function editProfile(user, token) {
   });
 }
 
-function logout(user) {
-  console.log("auth.service - logout - user = ", user);
+function logout() {
+  console.log("auth.service - logout");
   // remove user from local storage to log user out
   console.log("Removing currentUser in local storage.");
   localStorage.removeItem("currentUser");

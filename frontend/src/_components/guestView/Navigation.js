@@ -118,9 +118,9 @@ class Navigation extends Component {
       case "Contact":
         return "/contact";
       case "Profile":
-        return "/profile";
+        return "/profile/:" + this.props.username;
       case "Staff Manager":
-        return "/staff-manager";
+        return "/staff-manager/:" + this.props.username;
       default:
         return "/";
     }
@@ -157,9 +157,7 @@ class Navigation extends Component {
   }
 
   render() {
-    let loggedIn = this.props.isLoggedIn();
-    console.log("loggedIn: ", loggedIn);
-    let navbarContent = loggedIn
+    let navbarContent = this.props.isLoggedIn()
       ? this.state.navbarAdmin
       : this.state.navbarUser;
 
