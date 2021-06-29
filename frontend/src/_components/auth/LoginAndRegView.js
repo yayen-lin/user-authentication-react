@@ -35,24 +35,39 @@ class LoginAndRegView extends Component {
       usernameLogin: un,
     });
   }
+
   setPasswordLogin(pw) {
     this.setState({
       passwordLogin: pw,
     });
   }
+
+  setToHomeView(go) {
+    this.setState({ toHomeView: go });
+  }
+
   setUsernameSignup(un) {
     this.setState({
       usernameSignup: un,
     });
   }
+
   setPasswordSignup(pw) {
     this.setState({
       passwordSignup: pw,
     });
   }
+
   setPrivilegeSignup(priv) {
     this.setState({
       privilegeSignup: priv,
+    });
+  }
+
+  clearSignupFields() {
+    this.setState({
+      usernameSignup: "",
+      passwordSignup: "",
     });
   }
 
@@ -73,11 +88,12 @@ class LoginAndRegView extends Component {
     }
 
     let loginResult = await this.props.login(user);
-    if (loginResult === 0) {
-      // Successful login
-      this.setState({
-        toHomeView: true,
-      });
+    // login succeeded
+    if (loginResult === 0) this.setToHomeView(true);
+    // login failed
+    else {
+      toast.error("Something went wrong during login");
+      return;
     }
   }
 
@@ -111,16 +127,7 @@ class LoginAndRegView extends Component {
     } else {
       let signupResult = await this.props.signup(user);
       // clear fields upon successful signup
-      this.setState({
-        usernameSignup: "",
-        passwordSignup: "",
-      });
-      // if (signupResult === 0) {
-      //   // Successful signup
-      //   this.setState({
-      //     toHomeView: true,
-      //   });
-      // }
+      this.clearSignupFields();
     }
 
     // clear form after signup btn is clicked

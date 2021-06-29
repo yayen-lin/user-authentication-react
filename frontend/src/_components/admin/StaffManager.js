@@ -28,7 +28,6 @@ class StaffManager extends Component {
   render() {
     // redirect to login page if user is not logged in
     // console.log(this.props.isLoggedIn());
-    console.log(this.props.isAdmin());
     if (!this.props.isLoggedIn()) return <Redirect to="/login-and-reg" />;
 
     // const { currentUser, users } = this.state;

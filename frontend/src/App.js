@@ -53,15 +53,30 @@ class App extends Component {
     this.getCurrentUser();
   }
 
+  // componentWillUnmount() {
+  //   AuthService.currentUser.unsubscribe(this);
+  // }
+
+  /**
+   * Set logged in user info to state
+   *
+   * @param {*} resData: response from the server
+   */
   setToLoggedIn(resData) {
     if (resData)
       this.setState({ currentUser: resData, username: resData.username });
   }
 
+  /**
+   * Clear our logged out user info to the state
+   */
   setToLoggedOut() {
     this.setState({ currentUser: "", username: "" });
   }
 
+  /**
+   * get the current logged in user info from the server and set logged in user info to the state
+   */
   getCurrentUser() {
     AuthService.currentUser.subscribe((x) => {
       let resData = null;
