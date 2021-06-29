@@ -4,11 +4,15 @@ import React, { Component } from "react";
 // react router
 import {
   BrowserRouter as Router,
+  // Router,
   Switch,
   Route,
   // Link,
   Redirect,
 } from "react-router-dom";
+// import { history } from "./_helpers/history";
+import AuthService from "./_services/auth.service";
+import { PrivateRoute } from "./_components/PrivateRoute";
 
 // imports for action notification
 // reference: https://fkhadra.github.io/react-toastify/introduction
@@ -20,19 +24,19 @@ import store from "./store";
 import { Provider } from "react-redux";
 
 // auth
-import AuthService from "./services/auth.service";
-import LoginAndRegView from "./components/auth/LoginAndRegView";
+import LoginAndRegView from "./_components/auth/LoginAndRegView";
 
 // admin
-import Profile from "./components/admin/Profile";
+import Profile from "./_components/admin/Profile";
+import StaffManager from "./_components/admin/StaffManager";
 
 // guest views
-import Home from "./components/guestView/Home";
-import Help from "./components/guestView/Help";
-import About from "./components/guestView/About";
-import Contact from "./components/guestView/Contact";
-import GuestForm from "./components/guestView/GuestForm";
-import Navigation from "./components/guestView/Navigation";
+import Home from "./_components/guestView/Home";
+import Help from "./_components/guestView/Help";
+import About from "./_components/guestView/About";
+import Contact from "./_components/guestView/Contact";
+import GuestForm from "./_components/guestView/GuestForm";
+import Navigation from "./_components/guestView/Navigation";
 
 class App extends Component {
   constructor(props) {
@@ -42,27 +46,17 @@ class App extends Component {
       token: "",
       profile: "",
       loginStatus: "",
+      currentUser: "",
     };
   }
 
   componentDidMount() {
     this.checkIfLoggedIn();
+    console.log("x = ", this.state.currentUser);
   }
 
   checkIfLoggedIn() {
-    console.log("CHECK IF LOGGED IN");
-    let username = localStorage.getItem("user");
-    if (username) {
-      console.log(username, "CALL isLoggedIn()");
-      AuthService.isLoggedIn(username).then((response) => {
-        console.log("response isLoggedIn()");
-        if (response.error) {
-          console.log(response.message);
-        } else {
-          console.log(response);
-        }
-      });
-    } else console.log("NOT LOGGED IN");
+    AuthService.currentUser.subscribe((x) => this.setState({ currentUser: x }));
   }
 
   setUsername(un) {
@@ -168,9 +162,6 @@ class App extends Component {
         this.setToken(response.token);
         this.setProfile(response.profile);
 
-        // store user details and jwt token in local storage to keep user logged in between page refreshes
-        localStorage.setItem("user", user.username);
-
         // We only need to import toast in other components
         // if we want to make a notification there.
         toast.success("🚀 Successfully logged in!");
@@ -201,10 +192,6 @@ class App extends Component {
         this.setUsername("");
         this.setToken("");
         this.setProfile("");
-
-        // remove user from local storage to log user out
-        localStorage.removeItem("user");
-
         toast.info("👋 You are logged out. See you again!");
       }
     });
@@ -217,7 +204,7 @@ class App extends Component {
     return (
       <Provider store={store}>
         <div id="body-div">
-          <Router>
+          <Router /*history={history}*/>
             <ToastContainer
               position="top-right"
               autoClose={3000} // set to 3 sec
@@ -259,14 +246,24 @@ class App extends Component {
                 <Route exact path="/contact">
                   <Contact />
                 </Route>
-                <Route exact path="/profile">
+                <PrivateRoute exact path="/profile">
                   <Profile
                     isLoggedIn={() => this.isLoggedIn()}
                     profile={this.state.profile}
                     token={this.state.token}
                     isAuth={(user, token) => this.isAuth(user, token)}
                   />
-                </Route>
+                </PrivateRoute>
+                <PrivateRoute exact path="/staff-manager">
+                  <StaffManager
+                    isLoggedIn={() => this.isLoggedIn()}
+                    privilege={this.state.profile.privilege}
+                    username={this.state.profile.username}
+                    profile={this.state.profile}
+                    token={this.state.token}
+                    isAuth={(user, token) => this.isAuth(user, token)}
+                  />
+                </PrivateRoute>
 
                 {/* Redirect to home page */}
                 <Route exact path="/">

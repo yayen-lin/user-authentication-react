@@ -1,4 +1,21 @@
+/**
+ * Handling requests from the frontend and send to the backend
+ *
+ * @version 1.0.0
+ * @author [Yayen Lin](https://github.com/yayen-lin)
+ * @reference https://jasonwatmore.com/post/2019/04/06/react-jwt-authentication-tutorial-example#fake-backend-js
+ *            https://github.com/Scavenge-UW/Scavenge
+ */
+
 import request from "./request";
+import { BehaviorSubject } from "rxjs";
+
+// don't worry about unsubscribing from the observable here because it's the root component
+//  of the application, so the only time the component will be destroyed is when the
+// application is closed which would destroy any subscriptions as well.
+const currentUserSubject = new BehaviorSubject(
+  localStorage.getItem("currentUser")
+);
 
 // TODO: remove debugging console.log
 
@@ -7,19 +24,26 @@ import request from "./request";
 /**
  * Log in, a POST request that is sent to the server
  *
- * @param {*} user contains the user info for the user that has just sent login request
+ * @param {*} userinfo contains the user info for the user that has just sent login request
  * @returns a request object
  */
-function login(user) {
-  console.log("auth.service - login - user = ", user);
+function login(userinfo) {
+  console.log("auth.service - login - userinfo = ", userinfo);
   return request({
-    url: "/login",
     method: "POST",
+    url: "/login",
+    headers: { "Content-Type": "application/json" },
     data: {
-      username: user.username,
-      password: user.password,
+      username: userinfo.username,
+      password: userinfo.password,
     },
     withCredentials: true,
+  }).then((resData) => {
+    // store user details and jwt token in local storage to keep user logged in between page refreshes
+    localStorage.setItem("currentUser", JSON.stringify(resData.username));
+    currentUserSubject.next(resData); // TODO: this stores username and token in the Subject
+
+    return resData;
   });
 }
 
@@ -65,6 +89,10 @@ function editProfile(user, token) {
 
 function logout(user) {
   console.log("auth.service - logout - user = ", user);
+  // remove user from local storage to log user out
+  console.log("Removing currentUser in local storage.");
+  localStorage.removeItem("currentUser");
+  currentUserSubject.next(null);
   return request({
     url: "/logout",
     method: "POST",
@@ -109,6 +137,9 @@ const AuthService = {
   logout,
   isAuth, // TEST: remove
   isLoggedIn,
+  currentUser: currentUserSubject.asObservable(),
+  get currentUserValue() {
+    return currentUserSubject.value;
+  },
 };
-
 export default AuthService;

@@ -8,6 +8,7 @@ import Container from "react-bootstrap/Container";
 import { LinkContainer } from "react-router-bootstrap";
 
 // imports for icons
+import { GrUserSettings } from "react-icons/gr";
 import { BsGift } from "react-icons/bs";
 import { IoHomeOutline } from "react-icons/io5";
 import {
@@ -26,7 +27,15 @@ class Navigation extends Component {
   constructor(props) {
     super(props);
     this.state = {
-      navbarAdmin: ["Home", "About", "Contact", "Profile", "Help", "Logout"], // + manage users, + ?
+      navbarAdmin: [
+        "Home",
+        "About",
+        "Contact",
+        "Profile",
+        "Help",
+        "Staff Manager",
+        "Logout",
+      ], // + manage users, + ?
       navbarUser: ["Home", "About", "Contact", "Help", "Login"],
     };
   }
@@ -79,6 +88,12 @@ class Navigation extends Component {
             <BsGift size="0.9rem" />
           </>
         );
+      case "Staff Manager":
+        return (
+          <>
+            <GrUserSettings size="0.9rem" />
+          </>
+        );
       default:
         return <></>;
     }
@@ -104,6 +119,8 @@ class Navigation extends Component {
         return "/contact";
       case "Profile":
         return "/profile";
+      case "Staff Manager":
+        return "/staff-manager";
       default:
         return "/";
     }

@@ -117,9 +117,9 @@ exports.requireLogin = async (req, res, next) => {
   if (req.user) {
     next();
   } else {
-    return res
-      .status(200)
-      .json({ message: "You need to be signed in to perform that action." });
+    return res.status(200).json({
+      message: "You need to be signed in to perform that action.",
+    });
   }
 };
 
