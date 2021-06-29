@@ -1,58 +1,102 @@
 import "./App.css";
 import React, { Component } from "react";
+
+// react router
 import {
   BrowserRouter as Router,
+  // Router,
   Switch,
   Route,
   // Link,
   Redirect,
 } from "react-router-dom";
+// import { history } from "./_helpers/history";
+// import { PrivateRoute } from "./_components/PrivateRoute";
+
+// service
+import AuthService from "./_services/auth.service";
 
 // imports for action notification
 // reference: https://fkhadra.github.io/react-toastify/introduction
 import { ToastContainer, toast } from "react-toastify";
+import "react-toastify/dist/ReactToastify.css";
+
+// react-redux
+import store from "./store";
+import { Provider } from "react-redux";
 
 // auth
-import AuthService from "./services/auth.service";
-import LoginAndRegView from "./components/auth/LoginAndRegView";
+import LoginAndRegView from "./_components/auth/LoginAndRegView";
 
 // admin
-// import Profile from "./components/admin/Profile";
+import Profile from "./_components/admin/Profile";
+import StaffManager from "./_components/admin/StaffManager";
 
 // guest views
-import Home from "./components/guestView/Home";
-import Help from "./components/guestView/Help";
-import About from "./components/guestView/About";
-import Contact from "./components/guestView/Contact";
-import GuestForm from "./components/guestView/GuestForm";
-import Navigation from "./components/guestView/Navigation";
+import Home from "./_components/guestView/Home";
+import Help from "./_components/guestView/Help";
+import About from "./_components/guestView/About";
+import Contact from "./_components/guestView/Contact";
+import GuestForm from "./_components/guestView/GuestForm";
+import Navigation from "./_components/guestView/Navigation";
 
 class App extends Component {
   constructor(props) {
     super(props);
     this.state = {
+      currentUser: "",
       username: "",
-      token: "",
-      profile: "",
     };
   }
 
-  setUsername(un) {
-    this.setState({
-      username: un,
+  componentDidMount() {
+    this.getCurrentUser();
+  }
+
+  // componentWillUnmount() {
+  //   AuthService.currentUser.unsubscribe(this);
+  // }
+
+  /**
+   * Set logged in user info to state
+   *
+   * @param {*} resData: response from the server
+   */
+  setToLoggedIn(resData) {
+    if (resData)
+      this.setState({ currentUser: resData, username: resData.username });
+  }
+
+  /**
+   * Clear our logged out user info to the state
+   */
+  setToLoggedOut() {
+    this.setState({ currentUser: "", username: "" });
+  }
+
+  /**
+   * get the current logged in user info from the server and set logged in user info to the state
+   */
+  getCurrentUser() {
+    AuthService.currentUser.subscribe((x) => {
+      let resData = null;
+      try {
+        resData = JSON.parse(x);
+      } catch (e) {
+        resData = x;
+      }
+
+      // console.log("resData = ", resData);
+      this.setToLoggedIn(resData);
     });
   }
 
-  setToken(token) {
-    this.setState({
-      token: token,
-    });
-  }
-
-  setProfile(userInfo) {
-    this.setState({
-      profile: userInfo,
-    });
+  // visitor (if not logged in)
+  // If the state is logged in, the profile is not empty and will have the logged in user info
+  // else this user is a visitor
+  isLoggedIn() {
+    if (this.state.currentUser) return true;
+    return false;
   }
 
   // Admin (loggedIn = true)
@@ -61,7 +105,9 @@ class App extends Component {
   // - has access to manage site managers and admins
   // - can do simple edition to the site (e.g. update site info)
   isAdmin() {
-    return this.state.profile.privilege === 1;
+    if (this.isLoggedIn())
+      return this.state.currentUser.profile.privilege.toString() === "1";
+    return false;
   }
 
   // Manager (loggedIn = true)
@@ -70,14 +116,9 @@ class App extends Component {
   // - has no access to manage site managers and admins
   // - can do simple edition to the site (e.g. update site info)
   isManager() {
-    return this.state.profile.privilege === 0;
-  }
-
-  // visitor (if not logged in)
-  // If the state is logged in, the profile is not empty and will have the logged in user info
-  // else this user is a visitor
-  isLoggedIn() {
-    return this.state.profile !== "";
+    if (this.isLoggedIn())
+      return this.state.currentUser.profile.privilege.toString() === "0";
+    return false;
   }
 
   /**
@@ -101,9 +142,11 @@ class App extends Component {
         toast.error(response.message);
         return -1;
       } else {
-        this.setUsername(response.username);
-        this.setToken(response.token);
-        this.setProfile(response.profile);
+        console.log(response);
+        console.log(user);
+        // this.setUsername(response.username);
+        // this.setToken(response.token);
+        // this.setProfile(response.profile);
 
         // We only need to import toast in other components
         // if we want to make a notification there.
@@ -122,15 +165,21 @@ class App extends Component {
    * @returns 0 if login successful, -1 if login failure
    */
   async login(user) {
+    console.log("App.js - login - store.getState() = ", store.getState());
     return AuthService.login(user).then((response) => {
       if (response.message) {
         // When the API returns `message`, that means the login has failed
         toast.error(response.message);
         return -1;
       } else {
-        this.setUsername(response.username);
-        this.setToken(response.token);
-        this.setProfile(response.profile);
+        console.log(response);
+        console.log(user);
+        this.setToLoggedIn(response);
+        // this.setToLoginStatus(
+        //   response.username,
+        //   response.token,
+        //   response.profile
+        // );
 
         // We only need to import toast in other components
         // if we want to make a notification there.
@@ -141,15 +190,25 @@ class App extends Component {
     });
   }
 
+  async isAuth(user, token) {
+    return AuthService.isAuth(user, token).then((response) => {
+      if (response.error) {
+        console.log("AN ERROR OCCURRED WHILE ISAUTH WAS CALLED");
+        toast.error(response.message);
+      } else {
+        console.log(response);
+        console.log("ISAUTH WAS JUST CALLED");
+      }
+    });
+  }
+
   async logout() {
     return AuthService.logout().then((response) => {
       if (response.error) {
         toast.error(response.message);
       } else {
-        this.setUsername("");
-        this.setToken("");
-        this.setProfile("");
-
+        console.log(response);
+        this.setToLoggedOut();
         toast.info("👋 You are logged out. See you again!");
       }
     });
@@ -160,62 +219,83 @@ class App extends Component {
   //    https://www.pluralsight.com/guides/how-to-set-react-router-default-route-redirect-to-home
   render() {
     return (
-      <div id="body-div">
-        <Router>
-          <ToastContainer
-            position="top-right"
-            autoClose={3000} // set to 3 sec
-            hideProgressBar={false}
-            newestOnTop={false}
-            closeOnClick
-            rtl={false}
-            pauseOnFocusLoss
-            draggable
-            pauseOnHover
-          />
-          <div>
-            <Navigation
-              profile={this.state.profile}
-              isLoggedIn={() => this.isLoggedIn()}
-              logout={() => this.logout()}
-              isAdmin={this.isAdmin.bind(this)}
-              isManager={this.isAdmin.bind(this)}
+      <Provider store={store}>
+        <div id="body-div">
+          <Router /*history={history}*/>
+            <ToastContainer
+              position="top-right"
+              autoClose={3000} // set to 3 sec
+              hideProgressBar={false}
+              newestOnTop={false}
+              closeOnClick
+              rtl={false}
+              pauseOnFocusLoss
+              draggable
+              pauseOnHover
             />
-            <Switch id="body-switch">
-              <Route exact path="/home">
-                <Home />
-              </Route>
-              <Route exact path="/help">
-                <Help />
-              </Route>
-              <Route exact path="/form">
-                <GuestForm />
-              </Route>
-              <Route exact path="/about">
-                <About />
-              </Route>
-              <Route exact path="/login-and-reg">
-                <LoginAndRegView
-                  login={(user) => this.login(user)}
-                  signup={(user) => this.signup(user)}
-                />
-              </Route>
-              <Route exact path="/contact">
-                <Contact />
-              </Route>
+            <div>
+              <Navigation
+                username={this.state.username}
+                isLoggedIn={() => this.isLoggedIn()}
+                logout={() => this.logout()}
+                isAdmin={() => this.isAdmin()}
+                isManager={() => this.isManager()}
+              />
+              <Switch id="body-switch">
+                <Route exact path="/home">
+                  <Home />
+                </Route>
+                <Route exact path="/help">
+                  <Help />
+                </Route>
+                <Route exact path="/form">
+                  <GuestForm />
+                </Route>
+                <Route exact path="/about">
+                  <About />
+                </Route>
+                <Route exact path="/login-and-reg">
+                  <LoginAndRegView
+                    login={(user) => this.login(user)}
+                    signup={(user) => this.signup(user)}
+                    isLoggedIn={() => this.isLoggedIn()}
+                  />
+                </Route>
+                <Route exact path="/contact">
+                  <Contact />
+                </Route>
+                <Route exact path={"/profile/:" + this.state.username}>
+                  <Profile
+                    currentUser={this.state.currentUser}
+                    isLoggedIn={() => this.isLoggedIn()}
+                    isAuth={(user, token) => this.isAuth(user, token)}
+                  />
+                </Route>
+                <Route exact path={"/staff-manager/:" + this.state.username}>
+                  <StaffManager
+                    currentUser={this.state.currentUser}
+                    isAdmin={() => this.isAdmin()}
+                    isLoggedIn={() => this.isLoggedIn()}
+                  />
+                </Route>
 
-              {/* Redirect to home page */}
-              <Route exact path="/">
-                <Redirect to="/home" />
-              </Route>
-              {/* 404 Not Found */}
-              <Route path="*">
-                <div>404 Not Found</div>
-              </Route>
-            </Switch>
-          </div>
-        </Router>
-      </div>
+                {/* Redirect to home page */}
+                <Route exact path="/">
+                  <Redirect to="/home" />
+                </Route>
+                {/* Redirect logout to home page */}
+                <Route exact path="/logout">
+                  <Redirect push to="/home" />
+                </Route>
+                {/* 404 Not Found */}
+                <Route path="*">
+                  <div>404 Not Found</div>
+                </Route>
+              </Switch>
+            </div>
+          </Router>
+        </div>
+      </Provider>
     );
   }
 }

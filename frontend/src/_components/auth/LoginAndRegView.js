@@ -35,24 +35,39 @@ class LoginAndRegView extends Component {
       usernameLogin: un,
     });
   }
+
   setPasswordLogin(pw) {
     this.setState({
       passwordLogin: pw,
     });
   }
+
+  setToHomeView(go) {
+    this.setState({ toHomeView: go });
+  }
+
   setUsernameSignup(un) {
     this.setState({
       usernameSignup: un,
     });
   }
+
   setPasswordSignup(pw) {
     this.setState({
       passwordSignup: pw,
     });
   }
+
   setPrivilegeSignup(priv) {
     this.setState({
       privilegeSignup: priv,
+    });
+  }
+
+  clearSignupFields() {
+    this.setState({
+      usernameSignup: "",
+      passwordSignup: "",
     });
   }
 
@@ -65,19 +80,20 @@ class LoginAndRegView extends Component {
     };
 
     if (
-      this.state.usernameLogin.length == 0 ||
-      this.state.passwordLogin.length == 0
+      this.state.usernameLogin.length === 0 ||
+      this.state.passwordLogin.length === 0
     ) {
       toast.error("Username or password field is empty.");
       return;
     }
 
     let loginResult = await this.props.login(user);
-    if (loginResult === 0) {
-      // Successful login
-      this.setState({
-        toHomeView: true,
-      });
+    // login succeeded
+    if (loginResult === 0) this.setToHomeView(true);
+    // login failed
+    else {
+      toast.error("Something went wrong during login");
+      return;
     }
   }
 
@@ -87,39 +103,31 @@ class LoginAndRegView extends Component {
     const user = {
       username: this.state.usernameSignup,
       password: this.state.passwordSignup,
-      privilege: this.state.privilegeSignup,
+      privilege: "0", // on signup, privilege set to 0 (can be changed by admin)
     };
 
     let errors = [];
 
-    if (this.state.username.length == 0) {
+    if (!this.state.usernameSignup || this.state.usernameSignup.length === 0) {
       errors.push("Username field is empty");
     }
 
-    if (this.state.password.length == 0) {
+    if (!this.state.passwordSignup || this.state.passwordSignup.length === 0) {
       errors.push("Password field is empty");
     }
 
-    if (this.state.privilege.length == 0) {
-      errors.push("privilege field is empty");
-    }
-
-    if (errors.length != 0) {
+    if (errors.length !== 0) {
       toast.error(
         <ul>
           {errors.map((er) => {
-            return <li>{er}</li>;
+            return <li key={er}>{er}</li>;
           })}
         </ul>
       );
     } else {
       let signupResult = await this.props.signup(user);
-      if (signupResult === 0) {
-        // Successful signup
-        this.setState({
-          toHomeView: true,
-        });
-      }
+      // clear fields upon successful signup
+      this.clearSignupFields();
     }
 
     // clear form after signup btn is clicked
@@ -141,7 +149,7 @@ class LoginAndRegView extends Component {
               <FormControl
                 required
                 id="username-login-form"
-                type="text"
+                type={"text"}
                 value={this.state.usernameLogin}
                 placeholder="Username"
                 onChange={(e) => this.setUsernameLogin(e.target.value)}
@@ -163,7 +171,7 @@ class LoginAndRegView extends Component {
               <FormControl
                 required
                 id="password-login-form"
-                type="password"
+                type={"password"}
                 value={this.state.passwordLogin}
                 placeholder="Password"
                 onChange={(e) => this.setPasswordLogin(e.target.value)}
@@ -257,6 +265,11 @@ class LoginAndRegView extends Component {
   }
 
   render() {
+    // redirect to home view upon login successful
+    if (this.props.isLoggedIn()) return <Redirect to="/" />;
+    // redirect to home view if already logged in
+    // if (AuthService.currentUserValue) return <Redirect to="/" />;
+
     return (
       <Container>
         <h2 className="mt-3">Login</h2>

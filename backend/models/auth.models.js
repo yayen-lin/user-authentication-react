@@ -6,13 +6,16 @@
  * src: https://github.com/Scavenge-UW/Scavenge
  */
 
+// TODO: remove debugging console.log
+
 const { execQuery } = require("../query");
 
 exports.adminLogin = async (req, res, user) => {
+  console.log("auth.models - login - user = ", user);
   // User fields already validated
   const query = `
     SELECT * 
-    FROM user
+    FROM users
     WHERE username = ?;
   `;
   var values = [[user.username]];
@@ -22,10 +25,11 @@ exports.adminLogin = async (req, res, user) => {
 };
 
 exports.adminGetPrivilege = async (req, res, user) => {
+  console.log("auth.models - getPrivilege - user = ", user);
   // User fields already validated
   const query = `
     SELECT privilege 
-    FROM user
+    FROM users
     WHERE username = ?;
   `;
   var values = [[user.username]];
@@ -35,6 +39,7 @@ exports.adminGetPrivilege = async (req, res, user) => {
 };
 
 exports.adminSignup = async (req, res, newUser) => {
+  console.log("auth.models - signup - newUser = ", newUser);
   const saltRounds = 10;
   const query = `INSERT INTO users (username, password, privilege) VALUES ?;`;
 
@@ -42,7 +47,7 @@ exports.adminSignup = async (req, res, newUser) => {
   await bcrypt.hash(newUser.password, saltRounds, (err, hash) => {
     if (err) console.log(err);
     else {
-      const values = [[newUser.username, hash, newUser.previlege]];
+      const values = [[newUser.username, hash, newUser.privilege]];
       return execQuery(
         "insert",
         query,
@@ -54,13 +59,14 @@ exports.adminSignup = async (req, res, newUser) => {
 };
 
 exports.adminUpdate = async (req, res, newInfo) => {
+  console.log("auth.models - update - newInfo = ", newInfo);
   const saltRounds = 10;
   const query = `
-    UPDATE user u
+    UPDATE users u
     SET 
       username = ?,
       password = ?,
-      previlege = ?,
+      privilege = ?,
     WHERE u.username = ?;
   `;
 
@@ -69,7 +75,7 @@ exports.adminUpdate = async (req, res, newInfo) => {
     if (err) console.log(err);
     else {
       const values = [
-        [newUser.username, hash, newUser.previlege, req.params.username],
+        [newUser.username, hash, newUser.privilege, req.params.username],
       ];
       return execQuery("update", query, values);
     }
@@ -95,8 +101,9 @@ exports.adminUpdate = async (req, res, newInfo) => {
 };
 
 exports.adminDelete = async (req, res) => {
+  console.log("auth.models - delete -");
   const query = `
-    DELETE FROM user
+    DELETE FROM users
     WHERE username = ?;
   `;
   const values = [[req.params.username]];

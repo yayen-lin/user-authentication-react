@@ -1,3 +1,13 @@
+# Frontend
+
+The frontend is in the `src` folder. It consists of `components` and `services`.
+
+The `components` folder includes all of the building blocks of our application. They can be reusable. If you are making an API call to load data into a component when it renders, make sure to make the call in the "componentDidMount()" function.
+
+The `services` folder includes all of our frontend calls to the backend API.
+
+`App.js` is the root of our project.
+
 # Getting Started with Create React App
 
 This project was bootstrapped with [Create React App](https://github.com/facebook/create-react-app).

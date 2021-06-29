@@ -15,7 +15,7 @@ const db_config = {
   user: "ggdabhmy_admin",
   password: process.env.DB_PASSWORD,
   database: "ggdabhmy_carmax168",
-  connectionLimit: 5,
+  connectionLimit: 10,
 };
 
 const pool = mysql.createPool(db_config);

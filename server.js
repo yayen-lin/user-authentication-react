@@ -1,3 +1,10 @@
+/**
+ * server.js - where backend is, starting of our backend
+ *
+ * @version 1.0.0
+ * @author [Yayen Lin](https://github.com/yayen-lin)
+ */
+
 // ----------------------- requires dependencies -----------------------
 const path = require("path");
 const express = require("express");
@@ -17,45 +24,59 @@ const bodyParser = require("body-parser");
 const cookieParser = require("cookie-parser");
 // creating session and maintaining (keeps users logged in)
 const session = require("express-session");
+// store session data in mysql
+const mysqlStore = require("express-mysql-session")(session);
 // (authentication)
 // json web token, needed for logged in users to make every api requests
 const jwt = require("jsonwebtoken");
 
 // ----------------------- settings -----------------------
-const PORT = process.env.PORT || 3000;
-// const corsOptions = {
-//   // access-control-allow-origin
-//   origin: [
-//     "https://www.carmax168.com",
-//     "http://localhost:8081",
-//     // "http://localhost:" + PORT,
-//   ],
-//   methods: ["GET", "PUT", "POST", "DELETE"],
-//   allowedHeaders: [
-//     "Content-Type",
-//     "Authorization",
-//     "Origin",
-//     "X-Requested-With",
-//     "Accept",
-//     "X-Access-Token",
-//   ],
-//   credentials: true, // allowing cookie to be enabled (access-control-allow-credentials)
-// };
-// const db = mysql.createPool({
-//   host: "taipeinerd.com",
-//   user: "ggdabhmy_admin",
-//   password: process.env.DB_PASSWORD,
-//   database: "ggdabhmy_carmax168",
-//   connectionLimit: 5,
-// });
-const sess = {
-  key: "userId", // name of the cookie we create
-  secret: process.env.SESSION_SECRET,
-  resave: false,
-  saveUninitialized: false,
-  cookie: {
-    expires: 1000 * 60 * 60 * 24, // cookie expires in 24 hrs
+// default env setting
+const {
+  PORT = 3000,
+  SESSION_NAME = "sid",
+  SESSION_LIFETIME = 2, // two hours
+  NODE_ENV = "development",
+} = process.env;
+
+const IN_PROD = NODE_ENV === "production";
+
+var sessionStore = new mysqlStore({
+  // db config
+  host: "taipeinerd.com",
+  user: "ggdabhmy_admin",
+  password: process.env.DB_PASSWORD,
+  database: "ggdabhmy_carmax168",
+  // store setting
+  expiration: 1000 * 60 * 60 * 12, // session cookie expires in 12 hrs
+  createDatabaseTable: true,
+  clearExpired: true,
+  checkExpirationInterval: 900000, // clear expired session every 15 mins
+  connectionLimit: 1,
+  endConnectionOnClose: true,
+  // charset: "utf8mb4_bin",
+  schema: {
+    tableName: "sessions_table",
+    columnNames: {
+      session_id: "session_id",
+      expires: "expires",
+      data: "data",
+    },
   },
+});
+
+// default value is { path: '/', httpOnly: true, secure: false, maxAge: null }
+const sessOptions = {
+  name: process.env.SESSION_NAME,
+  secret: process.env.SESSION_SECRET,
+  resave: false, // not to store the session back to storage if they were never modified in the request
+  saveUninitialized: false, // not to save any uninitialized session that has no data
+  store: sessionStore, // session data is stored in mysql db
+  cookie: {
+    maxAge: 1000 * 60 * 60 * process.env.SESSION_LIFETIME,
+    sameSite: true, // or 'strict', same effect
+    secure: IN_PROD,
+  }, // session cookie expires in 12 hrs
 };
 
 // ----------------------- init -----------------------
@@ -64,19 +85,15 @@ app.use(express.json());
 // app.use(cors(corsOptions));
 // app.use(cors());
 app.use((req, res, next) => {
+  const allowedOrigins = ["https://www.carmax168.com", "http://localhost:8081"];
   const origin = req.headers.origin;
-  const allowedOrigins = [
-    "https://www.carmax168.com",
-    "http://localhost:" + PORT,
-  ];
   if (allowedOrigins.includes(origin)) {
     res.setHeader("Access-Control-Allow-Origin", origin);
   }
   res.header(
     "Access-Control-Allow-Headers",
-    "Origin, X-Requested-With, Content-Type, Accept, Authorization"
+    "x-access-token, Origin, X-Requested-With, Content-Type, Accept, Authorization"
   );
-  res.header("Access-Control-Allow-Credentials", true);
   res.header("Access-Control-Allow-Methods", "GET, PUT, POST, DELETE, OPTIONS");
   res.header("Access-Control-Allow-Credentials", true);
   next();
@@ -84,10 +101,7 @@ app.use((req, res, next) => {
 
 app.use(cookieParser());
 app.use(bodyParser.urlencoded({ extended: true }));
-app.use(session(sess));
-
-// Have Node serve the files for our built React app
-// app.use(express.static(path.resolve(__dirname, "../client/build")));
+app.use(session(sessOptions));
 
 // bad practice to use global in JS
 global.jwt = jwt;
@@ -95,27 +109,10 @@ global.bcrypt = bcrypt;
 
 // ----------------------- configuring -----------------------
 
-// app.post("/register", (req, res) => {
-//   const username = req.body.username;
-//   const password = req.body.password;
-//   const privilege = req.body.privilege;
-
-//   bcrypt.hash(password, saltRounds, (err, hash) => {
-//     if (err) {
-//       console.log(err);
-//     }
-//     db.query(
-//       "INSERT INTO users (username, password, privilege) VALUES (?, ?, ?);",
-//       [username, hash, privilege],
-//       (err, result) => {
-//         console.log(err);
-//       }
-//     );
-//   });
-// });
-
 // const verifyJWT = (req, res, next) => {
-//   const token = req.headers["x-access-token"]; // grabbing token from header
+//   console.log("req = ", req);
+//   console.log("res = ", res);
+//   const token = req.headers["x-access-token"] || req.headers["authorization"]; // grabbing token from header
 
 //   if (!token) {
 //     res.send("Yo, we need a token, please give it to us next time!");
@@ -204,10 +201,18 @@ global.bcrypt = bcrypt;
 const authRoutes = require("./backend/routes/auth.routes");
 app.use("/", authRoutes);
 
+// temp - TODO: remove this
+app.get("/session", function (req, res) {
+  res.json(req.session);
+});
+
 // ----------------------- production build -----------------------
 // Express only serves static assets in production
-if (process.env.NODE_ENV === "production") {
+if (IN_PROD) {
   app.use(express.static("frontend/build"));
+
+  app.set("trust proxy", 1); // trust first proxy
+  sess.cookie.secure = true; // serve secure cookies
 
   app.get("*", (req, res) => {
     res.sendFile(path.resolve(__dirname, "frontend", "build", "index.html"));

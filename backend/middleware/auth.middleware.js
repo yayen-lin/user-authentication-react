@@ -1,40 +1,62 @@
 /**
- * Admin login/signup/update/delete actions which execute the queries defined in auth.models.js.
+ * middleware is run on the server-side.
+ * - It is run before any of the code in the routes to verify that the user
+ *   making the request is actually authorized
  *
  * @version 1.0.0
  * @author [Yayen Lin](https://github.com/yayen-lin)
  * src: https://github.com/Scavenge-UW/Scavenge
  */
 
+// TODO: remove debugging console.log
+
 const { promisify } = require("util");
 const { execQuery } = require("../query");
-const authDB = require("../models/user.models");
+// const authDB = require("../models/user.models");
 
 /*
  * Helper middleware function that verifies if a user is truly logged in.
  * Sets req.user to the user; otherwise, user will be null.
  */
 exports.verifyAndGetUserInfo = async (req, res, next) => {
-  if (req.cookies.jwt) {
+  // console.log("auth.middleware - verifyAndGetUserInfo");
+  console.log(
+    "auth.middleware - verifyAndGetUserInfo - req.cookies = ",
+    req.cookies
+  );
+  console.log(
+    "auth.middleware - verifyAndGetUserInfo - req.cookies.Carmax168_cookie = ",
+    req.cookies.Carmax168_cookie
+  );
+  const decoded = await promisify(jwt.verify)(
+    req.cookies.Carmax168_cookie,
+    process.env.JWT_SECRET
+  );
+  console.log(
+    "auth.middleware - verifyAndGetUserInfo - decoded(req.cookies.Carmax168_cookie) = ",
+    decoded
+  );
+  if (req.cookies.Carmax168_cookie) {
     // async returns a promise after the await
-    // verify is from jwt web tokens
+    // verify is from jwt
     // 1. verify the token
     const decoded = await promisify(jwt.verify)(
-      req.cookies.jwt,
+      req.cookies.Carmax168_cookie,
       process.env.JWT_SECRET
     );
     console.log(decoded);
 
     // 2. check if the user still exists and get user info from DB
-    const query = `
-      SELECT * FROM user WHERE username = ?;
-    `;
+    const query = `SELECT * FROM users WHERE username = ?;`;
     execQuery("select", query, [decoded.username])
       .then(async (result) => {
         if (!result) {
           // if user doesn't exist in the database
           req.user = null;
           next();
+          return res.status(501).json({
+            message: "Unauthorized User Access",
+          });
         } else {
           // verified user
           req.user = result[0];
@@ -60,17 +82,19 @@ exports.verifyAndGetUserInfo = async (req, res, next) => {
         req.user = null;
         next();
       } else {
-        // user is signed in, but we need to check if the username still exists
-        const query = `
-          SELECT * FROM user WHERE username = ?;
-        `;
+        // user is signed in, but we need to check if the username exists
+        const query = `SELECT * FROM users WHERE username = ?;`;
         execQuery("select", query, [decoded.username])
           .then(async (result) => {
             if (!result) {
+              // if user doesn't exist in the database
               req.user = null;
               next();
+              return res.status(501).json({
+                message: "Unauthorized User Access",
+              });
             }
-            // got login info and user if verified
+            // got login info and user is verified
             req.user = result[0];
             next();
           })
@@ -89,12 +113,13 @@ exports.verifyAndGetUserInfo = async (req, res, next) => {
 };
 
 exports.requireLogin = async (req, res, next) => {
+  console.log("auth.middleware - requireLogin");
   if (req.user) {
     next();
   } else {
-    return res
-      .status(200)
-      .json({ message: "You need to be signed in to perform that action." });
+    return res.status(200).json({
+      message: "You need to be signed in to perform that action.",
+    });
   }
 };
 

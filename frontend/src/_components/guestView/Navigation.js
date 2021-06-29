@@ -1,24 +1,25 @@
 import React, { Component } from "react";
 
 // imports for bootstrap
-import Row from "react-bootstrap/Row";
+// import Row from "react-bootstrap/Row";
 import Nav from "react-bootstrap/Nav";
 import Navbar from "react-bootstrap/Navbar";
 import Container from "react-bootstrap/Container";
 import { LinkContainer } from "react-router-bootstrap";
 
 // imports for icons
+import { GrUserSettings } from "react-icons/gr";
 import { BsGift } from "react-icons/bs";
 import { IoHomeOutline } from "react-icons/io5";
 import {
   FiUser,
-  FiEdit,
+  // FiEdit,
   FiLogIn,
   FiLogOut,
-  FiSearch,
+  // FiSearch,
   FiUserPlus,
   FiClipboard,
-  FiHelpCircle,
+  // FiHelpCircle,
   FiShoppingCart,
 } from "react-icons/fi";
 
@@ -26,7 +27,15 @@ class Navigation extends Component {
   constructor(props) {
     super(props);
     this.state = {
-      navbarAdmin: ["Home", "About", "Contact", "Profile", "Help", "Logout"], // + manage users, + ?
+      navbarAdmin: [
+        "Home",
+        "About",
+        "Contact",
+        "Profile",
+        "Help",
+        "Staff Manager",
+        "Logout",
+      ], // + manage users, + ?
       navbarUser: ["Home", "About", "Contact", "Help", "Login"],
     };
   }
@@ -79,6 +88,12 @@ class Navigation extends Component {
             <BsGift size="0.9rem" />
           </>
         );
+      case "Staff Manager":
+        return (
+          <>
+            <GrUserSettings size="0.9rem" />
+          </>
+        );
       default:
         return <></>;
     }
@@ -103,7 +118,9 @@ class Navigation extends Component {
       case "Contact":
         return "/contact";
       case "Profile":
-        return "/profile";
+        return "/profile/:" + this.props.username;
+      case "Staff Manager":
+        return "/staff-manager/:" + this.props.username;
       default:
         return "/";
     }
@@ -121,7 +138,7 @@ class Navigation extends Component {
         <LinkContainer
           key={content}
           to={this.getRoute(content)}
-          // onClick={() => this.props.logout()}
+          onClick={() => this.props.logout()}
         >
           <Nav.Link>
             {this.getIcons(content)}
@@ -140,8 +157,7 @@ class Navigation extends Component {
   }
 
   render() {
-    let loggedIn = false;
-    let navbarContent = loggedIn
+    let navbarContent = this.props.isLoggedIn()
       ? this.state.navbarAdmin
       : this.state.navbarUser;
 
