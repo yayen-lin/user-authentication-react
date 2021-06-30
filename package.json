@@ -19,7 +19,7 @@
   },
   "keywords": [],
   "author": "Yayen Lin",
-  "license": "ISC",
+  "license": "MIT",
   "bugs": {
     "url": "https://github.com/yayen-lin/carmax168/issues"
   },
@@ -36,6 +36,7 @@
     "express-session": "^1.17.2",
     "history": "^5.0.0",
     "jsonwebtoken": "^8.5.1",
+    "mdb-react-ui-kit": "git+https://oauth2:${ENV.GITHUB_ACCESS_TOKEN}@git.mdbootstrap.com/mdb/react/mdb5/prd/mdb5-react-ui-kit-pro-essential",
     "mysql": "^2.18.1",
     "nodemon": "^2.0.7",
     "react-bootstrap": "^1.6.1",
