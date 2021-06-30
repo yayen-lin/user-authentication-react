@@ -165,7 +165,7 @@ class App extends Component {
    * @returns 0 if login successful, -1 if login failure
    */
   async login(user) {
-    console.log("App.js - login - store.getState() = ", store.getState());
+    // console.log("App.js - login - store.getState() = ", store.getState());
     return AuthService.login(user).then((response) => {
       if (response.message) {
         // When the API returns `message`, that means the login has failed
