@@ -1,0 +1,38 @@
+// reference: https://codepen.io/uncommonjoe/pen/wxvXXZ?editors=1100
+
+.floating-label-group {
+  position: relative;
+
+  .floating-label {
+    color: #cccccc;
+    position: absolute;
+    pointer-events: none;
+    top: 9px;
+    left: 12px;
+    transition: all 0.5s ease;
+  }
+
+  input:focus ~ .floating-label,
+  input:not(:focus):valid ~ .floating-label {
+    top: -30px;
+    bottom: 0px;
+    left: 0px;
+    opacity: 10;
+    font-weight: bolder;
+    color: #0057e9;
+  }
+
+  input:hover:not(:focus) ~ .floating-label,
+  input:not(:hover):valid ~ .floating-label {
+    top: -30px;
+    bottom: 0px;
+    left: 0px;
+    opacity: 10;
+    font-weight: bolder;
+    color: #404040;
+  }
+}
+
+.row {
+  margin-top: 50px;
+}
