@@ -1,0 +1,36 @@
+// reference: https://codepen.io/uncommonjoe/pen/wxvXXZ?editors=1100
+
+.floating-label-group {
+  position: relative;
+
+  .floating-label {
+    color: #cccccc;
+    position: absolute;
+    pointer-events: none;
+    top: 9px;
+    left: 12px;
+    transition: all 0.5s ease;
+  }
+
+  Form.Control:focus ~ .floating-label,
+  Form.Control:not(:focus):valid ~ .floating-label {
+    font-size: x-small;
+    top: -25px;
+    bottom: 0px;
+    left: 0px;
+    opacity: 10;
+    font-weight: normal;
+    color: #0057e9;
+  }
+
+  Form.Control:hover:not(:focus) ~ .floating-label,
+  Form.Control:not(:hover):valid ~ .floating-label {
+    font-size: x-small;
+    top: -30px;
+    bottom: 0px;
+    left: 0px;
+    opacity: 10;
+    font-weight: normal;
+    color: #404040;
+  }
+}
