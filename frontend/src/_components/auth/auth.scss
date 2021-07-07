@@ -1,0 +1,76 @@
+// reference: https://codepen.io/uncommonjoe/pen/wxvXXZ?editors=1100
+
+.floating-label-group {
+  position: relative;
+  border-radius: 15px;
+  border: 3px solid;
+
+  .floating-label {
+    color: #cccccc;
+    position: absolute;
+    pointer-events: none;
+    top: 9px;
+    left: 12px;
+    transition: all 0.5s ease;
+  }
+
+  // set border to none for apprend/prepend elements
+  .input-group-text {
+    border: 0px;
+  }
+
+  input:focus ~ .floating-label,
+  input:not(:focus):valid ~ .floating-label {
+    font-size: x-small;
+    top: -25px;
+    bottom: 0px;
+    left: 0px;
+    opacity: 10;
+    font-weight: normal;
+    color: #404040;
+  }
+
+  input:hover:not(:focus) ~ .floating-label,
+  input:not(:hover):valid ~ .floating-label {
+    font-size: x-small;
+    top: -30px;
+    bottom: 0px;
+    left: 0px;
+    opacity: 10;
+    font-weight: normal;
+    color: #404040;
+  }
+
+  .floating-label-w-icon {
+    color: #cccccc;
+    position: absolute;
+    pointer-events: none;
+    top: 9px;
+    left: 12px;
+    transition: all 0.5s ease;
+    padding-left: 50px;
+  }
+
+  input:focus ~ .floating-label-w-icon,
+  input:not(:focus):valid ~ .floating-label-w-icon {
+    font-size: x-small;
+    top: -25px;
+    bottom: 0px;
+    left: -50px;
+    opacity: 10;
+    font-weight: normal;
+    // color: #0057e9;
+    color: #404040;
+  }
+
+  input:hover:not(:focus) ~ .floating-label-w-icon,
+  input:not(:hover):valid ~ .floating-label-w-icon {
+    font-size: x-small;
+    top: -30px;
+    bottom: 0px;
+    left: -50px;
+    opacity: 10;
+    font-weight: normal;
+    color: #404040;
+  }
+}

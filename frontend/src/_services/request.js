@@ -24,7 +24,7 @@ const client = axios.create({
 const request = function (options) {
   let isLoggedIn = null;
   if (options.headers)
-    isLoggedIn = options.headers["Authorization"] === "Bearer"; // TODO: change to starts with?
+    isLoggedIn = options.headers["Authorization"].startsWith("Bearer "); // TODO: change to starts with?
 
   console.log("isLoggedIn = ", isLoggedIn ? "true" : "false");
 

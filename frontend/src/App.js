@@ -27,6 +27,8 @@ import { Provider } from "react-redux";
 
 // auth
 import LoginAndRegView from "./_components/auth/LoginAndRegView";
+import LoginView from "./_components/auth/LoginView";
+import SignupView from "./_components/auth/SignupView";
 
 // admin
 import Profile from "./_components/admin/Profile";
@@ -165,7 +167,7 @@ class App extends Component {
    * @returns 0 if login successful, -1 if login failure
    */
   async login(user) {
-    console.log("App.js - login - store.getState() = ", store.getState());
+    // console.log("App.js - login - store.getState() = ", store.getState());
     return AuthService.login(user).then((response) => {
       if (response.message) {
         // When the API returns `message`, that means the login has failed
@@ -173,7 +175,7 @@ class App extends Component {
         return -1;
       } else {
         console.log(response);
-        console.log(user);
+        // console.log(user);
         this.setToLoggedIn(response);
         // this.setToLoginStatus(
         //   response.username,
@@ -253,6 +255,12 @@ class App extends Component {
                 </Route>
                 <Route exact path="/about">
                   <About />
+                </Route>
+                <Route exact path="/signup">
+                  <SignupView />
+                </Route>
+                <Route exact path="/login">
+                  <LoginView />
                 </Route>
                 <Route exact path="/login-and-reg">
                   <LoginAndRegView

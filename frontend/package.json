@@ -1,8 +1,7 @@
 {
   "name": "frontend",
   "version": "0.1.0",
-  "homepage": "https://www.carmax168.com",
-  "proxy": "http://localhost:3001",
+  "homepage": "http://www.carmax168.com",
   "private": true,
   "dependencies": {
     "@testing-library/jest-dom": "^5.13.0",
@@ -12,6 +11,7 @@
     "browserslist": "^4.16.6",
     "css-what": "^5.0.1",
     "glob-parent": "^6.0.0",
+    "node-sass": "^6.0.1",
     "normalize-url": "^6.0.1",
     "postcss": "^8.3.2",
     "react": "^17.0.2",
