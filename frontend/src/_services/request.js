@@ -24,7 +24,8 @@ const client = axios.create({
 const request = function (options) {
   let isLoggedIn = null;
   if (options.headers)
-    isLoggedIn = options.headers["Authorization"].startsWith("Bearer "); // TODO: change to starts with?
+    if (options.headers["Authorization"])
+      isLoggedIn = options.headers["Authorization"].startsWith("Bearer "); // TODO: change to starts with?
 
   console.log("isLoggedIn = ", isLoggedIn ? "true" : "false");
 
@@ -37,9 +38,9 @@ const request = function (options) {
     // return Promise.resolve(response);
   };
 
+  // TODO: need test
   // handling response if error occurs
   const onError = function (error) {
-    // TODO: need test
     console.error("Request Failed:", error.config);
 
     if (!error.response.ok) {

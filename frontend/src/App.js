@@ -21,10 +21,6 @@ import AuthService from "./_services/auth.service";
 import { ToastContainer, toast } from "react-toastify";
 import "react-toastify/dist/ReactToastify.css";
 
-// react-redux
-import store from "./store";
-import { Provider } from "react-redux";
-
 // auth
 import LoginAndRegView from "./_components/auth/LoginAndRegView";
 import LoginView from "./_components/auth/LoginView";
@@ -221,89 +217,87 @@ class App extends Component {
   //    https://www.pluralsight.com/guides/how-to-set-react-router-default-route-redirect-to-home
   render() {
     return (
-      <Provider store={store}>
-        <div id="body-div">
-          <Router /*history={history}*/>
-            <ToastContainer
-              position="top-right"
-              autoClose={3000} // set to 3 sec
-              hideProgressBar={false}
-              newestOnTop={false}
-              closeOnClick
-              rtl={false}
-              pauseOnFocusLoss
-              draggable
-              pauseOnHover
+      <div id="body-div">
+        <Router /*history={history}*/>
+          <ToastContainer
+            position="top-right"
+            autoClose={3000} // set to 3 sec
+            hideProgressBar={false}
+            newestOnTop={false}
+            closeOnClick
+            rtl={false}
+            pauseOnFocusLoss
+            draggable
+            pauseOnHover
+          />
+          <div>
+            <Navigation
+              username={this.state.username}
+              isLoggedIn={() => this.isLoggedIn()}
+              logout={() => this.logout()}
+              isAdmin={() => this.isAdmin()}
+              isManager={() => this.isManager()}
             />
-            <div>
-              <Navigation
-                username={this.state.username}
-                isLoggedIn={() => this.isLoggedIn()}
-                logout={() => this.logout()}
-                isAdmin={() => this.isAdmin()}
-                isManager={() => this.isManager()}
-              />
-              <Switch id="body-switch">
-                <Route exact path="/home">
-                  <Home />
-                </Route>
-                <Route exact path="/help">
-                  <Help />
-                </Route>
-                <Route exact path="/form">
-                  <GuestForm />
-                </Route>
-                <Route exact path="/about">
-                  <About />
-                </Route>
-                <Route exact path="/signup">
-                  <SignupView />
-                </Route>
-                <Route exact path="/login">
-                  <LoginView />
-                </Route>
-                <Route exact path="/login-and-reg">
-                  <LoginAndRegView
-                    login={(user) => this.login(user)}
-                    signup={(user) => this.signup(user)}
-                    isLoggedIn={() => this.isLoggedIn()}
-                  />
-                </Route>
-                <Route exact path="/contact">
-                  <Contact />
-                </Route>
-                <Route exact path={"/profile/:" + this.state.username}>
-                  <Profile
-                    currentUser={this.state.currentUser}
-                    isLoggedIn={() => this.isLoggedIn()}
-                    isAuth={(user, token) => this.isAuth(user, token)}
-                  />
-                </Route>
-                <Route exact path={"/staff-manager/:" + this.state.username}>
-                  <StaffManager
-                    currentUser={this.state.currentUser}
-                    isAdmin={() => this.isAdmin()}
-                    isLoggedIn={() => this.isLoggedIn()}
-                  />
-                </Route>
+            <Switch id="body-switch">
+              <Route exact path="/home">
+                <Home />
+              </Route>
+              <Route exact path="/help">
+                <Help />
+              </Route>
+              <Route exact path="/form">
+                <GuestForm />
+              </Route>
+              <Route exact path="/about">
+                <About />
+              </Route>
+              <Route exact path="/signup">
+                <SignupView />
+              </Route>
+              <Route exact path="/login">
+                <LoginView />
+              </Route>
+              <Route exact path="/login-and-reg">
+                <LoginAndRegView
+                  login={(user) => this.login(user)}
+                  signup={(user) => this.signup(user)}
+                  isLoggedIn={() => this.isLoggedIn()}
+                />
+              </Route>
+              <Route exact path="/contact">
+                <Contact />
+              </Route>
+              <Route exact path={"/profile/:" + this.state.username}>
+                <Profile
+                  currentUser={this.state.currentUser}
+                  isLoggedIn={() => this.isLoggedIn()}
+                  isAuth={(user, token) => this.isAuth(user, token)}
+                />
+              </Route>
+              <Route exact path={"/staff-manager/:" + this.state.username}>
+                <StaffManager
+                  currentUser={this.state.currentUser}
+                  isAdmin={() => this.isAdmin()}
+                  isLoggedIn={() => this.isLoggedIn()}
+                />
+              </Route>
 
-                {/* Redirect to home page */}
-                <Route exact path="/">
-                  <Redirect to="/home" />
-                </Route>
-                {/* Redirect logout to home page */}
-                <Route exact path="/logout">
-                  <Redirect push to="/home" />
-                </Route>
-                {/* 404 Not Found */}
-                <Route path="*">
-                  <div>404 Not Found</div>
-                </Route>
-              </Switch>
-            </div>
-          </Router>
-        </div>
-      </Provider>
+              {/* Redirect to home page */}
+              <Route exact path="/">
+                <Redirect to="/home" />
+              </Route>
+              {/* Redirect logout to home page */}
+              <Route exact path="/logout">
+                <Redirect push to="/home" />
+              </Route>
+              {/* 404 Not Found */}
+              <Route path="*">
+                <div>404 Not Found</div>
+              </Route>
+            </Switch>
+          </div>
+        </Router>
+      </div>
     );
   }
 }
