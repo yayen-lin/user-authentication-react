@@ -12,6 +12,11 @@ const {
   requireLogin,
 } = require("../middleware/auth.middleware");
 
+const { checkDuplicateUser } = require("../helpers/validation");
+
+// signup
+router.route("/adminSignup").post(checkDuplicateUser, adminSignupAction);
+
 // login
 router.route("/adminLogin").post(adminLoginAction); // add a .get(adminStayLoggedIn) middleware?
 
@@ -19,9 +24,6 @@ router.route("/adminLogin").post(adminLoginAction); // add a .get(adminStayLogge
 router
   .route("/adminLogout")
   .post(verifyAndGetUserInfo, requireLogin, adminLogoutAction);
-
-// sign up
-router.route("/adminSignup").post(adminSignupAction);
 
 // verify token
 router.route(`/verifyToken?token=:token`).get(verifyAndGetUserInfo);

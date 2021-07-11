@@ -5,6 +5,11 @@
  * @author [Yayen Lin](https://github.com/yayen-lin)
  */
 
+const Joi = require("joi");
+const authDB = require("../models/auth.models");
+const { execQuery } = require("../query");
+const Response = require("./response");
+
 const passwordMinLength = 2;
 const usernameMinLength = 2;
 
@@ -55,4 +60,40 @@ const isEmpty = (input) => {
   // replace input string with "" and the length > 0 returns false
   if (input.replace(/\s/g, "").length) return false;
   return true;
+};
+
+/**
+ * check for duplicate user.
+ *
+ * @param {*} req
+ * @param {*} res
+ * @param {*} next
+ * @returns
+ */
+exports.checkDuplicateUser = async (req, res, next) => {
+  const schema = Joi.object({
+    username: Joi.string().required(),
+    firstname: Joi.string(),
+    lastname: Joi.string(),
+    password: Joi.string().required(),
+  });
+
+  const result = schema.validate(req.body);
+
+  if (result.error)
+    return Response.sendErrorReponse({
+      res,
+      message: result.error.details[0].message.replace(/['"]/g, ""),
+      statusCode: 422,
+    });
+
+  authDB.checkForUsername(req, res, req.body.username).then(async (rows) => {
+    const dbResponse = rows[0];
+    if (dbResponse)
+      return Response.sendErrorResponse({
+        res,
+        message: "This username already exists, please provide a new username",
+      });
+    return next();
+  });
 };

@@ -14,10 +14,17 @@ const { execQuery } = require("../query");
 exports.adminSignup = async (req, res, vals) => {
   console.log("auth.models - signup - vals = ", vals);
   const query = `INSERT INTO managers (username, firstname, lastname, password, privilege, active, createdOn) VALUES ?;`;
+  return execQuery("insert", query, [vals]);
+};
+
+// checkForUsername - used for checking for duplicate username
+exports.checkForUsername = async (req, res, username) => {
+  const query = `SELECT username FROM managers WHERE username = ?;`;
+  const values = [[username]];
   return execQuery(
-    "insert",
+    "select",
     query,
-    [vals],
+    values,
     "Duplicate username. Please choose another one."
   );
 };
