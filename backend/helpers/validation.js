@@ -15,7 +15,7 @@ const usernameMinLength = 2;
  * @returns {Boolean} true if the username is valid, false otherwise.
  */
 exports.validateUsername = (username) => {
-  if (username.length <= usernameMinLength || username == "" || !username)
+  if (!username || username == "" || username.length <= usernameMinLength)
     return false;
   return true;
 };
@@ -27,7 +27,7 @@ exports.validateUsername = (username) => {
  * @returns {Boolean} true if the password is valid, false otherwise.
  */
 exports.validatePassword = (password) => {
-  if (password.length <= passwordMinLength || password === "" || !password)
+  if (!password || password === "" || password.length <= passwordMinLength)
     return false;
   return true;
 };

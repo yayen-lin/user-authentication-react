@@ -13,9 +13,10 @@
 const authDB = require("../models/auth.models.js");
 
 // helper functions
-const Validation = require("../helpers/validation");
-const Response = require("../helpers/response");
 const Utils = require("../helpers/utils");
+const Response = require("../helpers/response");
+const Validation = require("../helpers/validation");
+const datetimeConverter = require("../helpers/datetimeConverter");
 
 // tools
 const moment = require("moment");
@@ -29,18 +30,11 @@ const moment = require("moment");
  * @returns
  */
 exports.adminSignupAction = (req, res) => {
-  // const newUser = {
-  //   username: req.body.username,
-  //   firstname: req.body.firstname,
-  //   lastname: req.body.lastname,
-  //   password: req.body.password,
-  // };
-
   const { username, firstname, lastname, password } = req.body;
 
   const privilegeDefault = "3";
   const activeDefault = "1";
-  const createdOn = moment(new Date());
+  const createdOn = datetimeConverter.toMySqlDateTime(moment(new Date()));
 
   // check username
   if (!Validation.validateUsername(username)) {
@@ -52,7 +46,7 @@ exports.adminSignupAction = (req, res) => {
   }
 
   // check password
-  if (!Validation.validatePasswrod(password)) {
+  if (!Validation.validatePassword(password)) {
     return Response.sendErrorResponse({
       res,
       message: "Please provide a valid password",
@@ -79,12 +73,12 @@ exports.adminSignupAction = (req, res) => {
     .then(async (rows) => {
       console.log("auth.controllers - signup - rows = ", rows);
 
-      dbResponse = rows[0];
-      delete dbResponse.password;
+      // dbResponse = rows[0];
+      // delete dbResponse.password;
 
       return Response.sendResponse({
         res,
-        responseBody: { user: dbResponse },
+        responseBody: { user: rows /*dbResponse*/ },
         statusCode: 201,
         message: "User successfully created",
       });
@@ -99,6 +93,12 @@ exports.adminSignupAction = (req, res) => {
     });
 };
 
+/**
+ * Admin login action
+ * @param {*} req
+ * @param {*} res
+ * @returns
+ */
 exports.adminLoginAction = (req, res) => {
   const user = {
     username: req.body.username,

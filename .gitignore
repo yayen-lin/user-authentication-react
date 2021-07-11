@@ -10,6 +10,9 @@ node_modules/
 # git
 .git
 
+# api testing (katalon studio)
+carmax168/
+
 # ssh-keygen for encrypting jwt
 private.key
 public.key

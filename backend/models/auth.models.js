@@ -12,7 +12,7 @@ const { execQuery } = require("../query");
 
 // signup
 exports.adminSignup = async (req, res, vals) => {
-  console.log("auth.models - signup - newUser = ", newUser);
+  console.log("auth.models - signup - vals = ", vals);
   const query = `INSERT INTO managers (username, firstname, lastname, password, privilege, active, createdOn) VALUES ?;`;
   return execQuery(
     "insert",
