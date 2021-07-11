@@ -11,7 +11,7 @@ node_modules/
 .git
 
 # api testing (katalon studio)
-carmax168/
+carmax168-api/
 
 # ssh-keygen for encrypting jwt
 private.key
