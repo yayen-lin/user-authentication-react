@@ -1,11 +1,15 @@
 # npm dependencies
 node_modules/
 
+# env var
 .env
 
-# mac
+# misc
 .DS_Store
 
 # git
 .git
 
+# ssh-keygen for encrypting jwt
+private.key
+public.key

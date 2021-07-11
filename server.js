@@ -5,7 +5,7 @@
  * @author [Yayen Lin](https://github.com/yayen-lin)
  */
 
-// ----------------------- requires dependencies -----------------------
+// ----------------------- dependencies -----------------------
 const path = require("path");
 const express = require("express");
 // enable environment variable to be read
@@ -106,96 +106,6 @@ app.use(session(sessOptions));
 // bad practice to use global in JS
 global.jwt = jwt;
 global.bcrypt = bcrypt;
-
-// ----------------------- configuring -----------------------
-
-// const verifyJWT = (req, res, next) => {
-//   console.log("req = ", req);
-//   console.log("res = ", res);
-//   const token = req.headers["x-access-token"] || req.headers["authorization"]; // grabbing token from header
-
-//   if (!token) {
-//     res.send("Yo, we need a token, please give it to us next time!");
-//   } else {
-//     jwt.verify(token, process.env.JWT_SECRET, (err, decoded) => {
-//       if (err) {
-//         // fail to authenticate
-//         res.json({ auth: false, message: "Failed to authenticate" });
-//       } else {
-//         req.userId = decoded.id; // saving the decoded id (token) for further verifications/authenticated requests.
-//         next();
-//       }
-//     });
-//   }
-// };
-
-// app.get("/isUserAuth", verifyJWT, (req, res) => {
-//   res.send("YOYOYO! You are authenticated!");
-// });
-
-// see if the user is logged in
-// app.get("/login", (req, res) => {
-//   if (req.session.user) {
-//     res.send({ loggedIn: true, user: req.session.user });
-//   } else {
-//     res.send({ loggedIn: false });
-//   }
-// });
-
-// app.post("/login", (req, res) => {
-//   const username = req.body.username;
-//   const password = req.body.password;
-
-//   // console.log(typeof password); // string
-
-//   // hash + salt
-//   bcrypt.hash(password.saltRounds, (err, hash) => {
-//     // TODO: Error: data must be a string or Buffer and salt must
-//     // either be a salt string or a number of rounds
-//     if (err) {
-//       console.log(err);
-//     }
-
-//     db.query(
-//       "SELECT * FROM users WHERE username = ?;",
-//       [username],
-//       (err, result) => {
-//         if (err) {
-//           res.send({ err: err });
-//         }
-//         if (result.length > 0) {
-//           bcrypt.compare(password, result[0].password, (error, response) => {
-//             if (response) {
-//               // login successfully
-//               console.log("Logged in successfully!");
-
-//               // create a jwt
-//               const id = result[0].user_id;
-//               const token = jwt.sign({ id }, process.env.JWT_SECRET, {
-//                 expiresIn: 300, // 5 mins
-//               });
-
-//               req.session.user = result; // create a session
-//               console.log(req.session.user);
-
-//               // res.send(result);
-//               res.json({
-//                 auth: true, // authorized
-//                 token: token,
-//                 result: result,
-//               });
-//             } else {
-//               // login fail
-//               res.json({ auth: false, message: "Wrong username or password!" });
-//             }
-//           });
-//         } else {
-//           res.json({ auth: false, message: "User doesn't exist!" });
-//         }
-//       }
-//     );
-//   });
-// });
 
 // ----------------------- import routes -----------------------
 const authRoutes = require("./backend/routes/auth.routes");

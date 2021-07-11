@@ -29,14 +29,15 @@ class Navigation extends Component {
     this.state = {
       navbarAdmin: [
         "Home",
-        "About",
-        "Contact",
-        "Profile",
-        "Help",
-        "Staff Manager",
+        // "About",
+        // "Contact",
+        "Dashboard",
+        // "Help",
+        // "Staff Manager",
         "Logout",
       ], // + manage users, + ?
-      navbarUser: ["Home", "About", "Contact", "Help", "Login"],
+      // navbarUser: ["Home", "About", "Contact", "Help", "Login"],
+      navbarUser: ["Home", "Login"],
     };
   }
 
@@ -117,6 +118,8 @@ class Navigation extends Component {
         return "/about";
       case "Contact":
         return "/contact";
+      case "Dashboard":
+        return "/dashboard";
       case "Profile":
         return "/profile/:" + this.props.username;
       case "Staff Manager":

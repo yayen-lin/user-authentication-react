@@ -13,8 +13,9 @@ import {
 // import { history } from "./_helpers/history";
 // import { PrivateRoute } from "./_components/PrivateRoute";
 
-// service
+// service and helpers
 import AuthService from "./_services/auth.service";
+import { getToken } from "./_helpers/Common";
 
 // imports for action notification
 // reference: https://fkhadra.github.io/react-toastify/introduction
@@ -28,6 +29,7 @@ import SignupView from "./_components/auth/SignupView";
 
 // admin
 import Profile from "./_components/admin/Profile";
+import Dashboard from "./_components/admin/Dashboard";
 import StaffManager from "./_components/admin/StaffManager";
 
 // guest views
@@ -44,16 +46,19 @@ class App extends Component {
     this.state = {
       currentUser: "",
       username: "",
+      authLoading: "true",
     };
   }
 
-  componentDidMount() {
-    this.getCurrentUser();
-  }
+  componentDidMount() {}
 
-  // componentWillUnmount() {
-  //   AuthService.currentUser.unsubscribe(this);
-  // }
+  // TODO: set Auth
+  setAuthAndSession() {
+    const token = getToken();
+    if (!token) return;
+
+    // verify token
+  }
 
   /**
    * Set logged in user info to state
@@ -70,23 +75,6 @@ class App extends Component {
    */
   setToLoggedOut() {
     this.setState({ currentUser: "", username: "" });
-  }
-
-  /**
-   * get the current logged in user info from the server and set logged in user info to the state
-   */
-  getCurrentUser() {
-    AuthService.currentUser.subscribe((x) => {
-      let resData = null;
-      try {
-        resData = JSON.parse(x);
-      } catch (e) {
-        resData = x;
-      }
-
-      // console.log("resData = ", resData);
-      this.setToLoggedIn(resData);
-    });
   }
 
   // visitor (if not logged in)
@@ -266,6 +254,9 @@ class App extends Component {
               </Route>
               <Route exact path="/contact">
                 <Contact />
+              </Route>
+              <Route exact path="/dashboard">
+                <Dashboard />
               </Route>
               <Route exact path={"/profile/:" + this.state.username}>
                 <Profile

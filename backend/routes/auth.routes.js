@@ -5,10 +5,6 @@ const {
   adminLoginAction,
   adminLogoutAction,
   adminSignupAction,
-  adminUpdateUserAction,
-  adminDeleteUserAction,
-  adminIsAuth, // TEST: remove
-  adminIsLoggedIn,
 } = require("../controllers/auth.controllers.js");
 
 const {
@@ -16,25 +12,18 @@ const {
   requireLogin,
 } = require("../middleware/auth.middleware");
 
-router.route("/isAuth").get(verifyAndGetUserInfo, requireLogin, adminIsAuth); // TEST: remove
-
-router.route("/isLoggedIn").get(adminIsLoggedIn);
-
 // login
-router.route("/login").post(adminLoginAction); // add a .get(adminStayLoggedIn) middleware?
+router.route("/adminLogin").post(adminLoginAction); // add a .get(adminStayLoggedIn) middleware?
 
 // logout
 router
-  .route("/logout")
+  .route("/adminLogout")
   .post(verifyAndGetUserInfo, requireLogin, adminLogoutAction);
 
 // sign up
-router.route("/signup").post(adminSignupAction);
+router.route("/adminSignup").post(adminSignupAction);
 
-// update and delete users
-router
-  .route("/:username")
-  .put(verifyAndGetUserInfo, requireLogin, adminUpdateUserAction)
-  .delete(verifyAndGetUserInfo, requireLogin, adminDeleteUserAction);
+// verify token
+router.route(`/verifyToken?token=:token`).get(verifyAndGetUserInfo);
 
 module.exports = router; // We need this at the end of every route file

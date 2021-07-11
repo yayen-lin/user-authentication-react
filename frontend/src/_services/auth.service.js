@@ -8,14 +8,8 @@
  */
 
 import request from "./request";
-import { BehaviorSubject } from "rxjs";
 
-// don't worry about unsubscribing from the observable here because it's the root component
-//  of the application, so the only time the component will be destroyed is when the
-// application is closed which would destroy any subscriptions as well.
-const currentUserSubject = new BehaviorSubject(
-  localStorage.getItem("currentUser")
-);
+import { setUserSession, removeUserSession } from "../_helpers/Common";
 
 // TODO: remove debugging console.log
 
@@ -38,13 +32,32 @@ function login(userinfo) {
       password: userinfo.password,
     },
     withCredentials: true,
-  }).then((resData) => {
-    // store user details and jwt token in local storage to keep user logged in between page refreshes
-    localStorage.setItem("currentUser", JSON.stringify(resData));
-    currentUserSubject.next(resData); // TODO: this stores username and token in the Subject
+  }).then((response) => {
+    console.log(response);
+    setUserSession(response.username, response.token);
 
-    return resData;
+    return response;
   });
+}
+
+function verifyToken(token) {
+  return request({
+    method: "GET",
+    url: `/verifyToken?token=${token}`,
+    data: {
+      token: token,
+    },
+    withCredential: true,
+  })
+    .then((response) => {
+      setUserSession(response.user, response.token);
+    })
+    .catch((error) => {
+      removeUserSession();
+      console.log(
+        `An error occurred while verifying token. error message: ${error}`
+      );
+    });
 }
 
 /**
@@ -56,14 +69,25 @@ function login(userinfo) {
 function signup(user) {
   console.log("auth.service - signup - user = ", user);
   return request({
-    url: "/signup",
     method: "POST",
+    url: "/signup",
     data: {
       username: user.username,
       password: user.password,
       privilege: user.privilege,
     },
     withCredentials: true,
+  });
+}
+
+function logout() {
+  console.log("auth.service - logout");
+  return request({
+    method: "POST",
+    url: "/logout",
+    withCredentials: true,
+  }).then(() => {
+    removeUserSession();
   });
 }
 
@@ -72,8 +96,8 @@ function editProfile(user, token) {
   console.log("auth.service - editProfile - token = ", token);
 
   return request({
-    url: "/" + user.username,
     method: "PUT",
+    url: "/" + user.username,
     data: {
       username: user.username,
       password: user.password,
@@ -87,28 +111,13 @@ function editProfile(user, token) {
   });
 }
 
-function logout() {
-  console.log("auth.service - logout");
-  // remove user from local storage to log user out
-  console.log("Removing currentUser in local storage.");
-  localStorage.removeItem("currentUser");
-  currentUserSubject.next(null);
-  return request({
-    url: "/logout",
-    method: "POST",
-    withCredentials: true,
-  });
-}
-
-// TEST: remove
-function isAuth(user, token) {
-  // TODO: add is_auth user
-  console.log("auth.service - isAuth - user = ", user);
-  console.log("auth.service - isAuth - token = ", token);
+function remove(user, token) {
+  console.log("auth.service - remove - user = ", user);
+  console.log("auth.service - remove - token = ", token);
 
   return request({
-    url: "/isAuth",
-    method: "GET",
+    method: "delete",
+    url: "/" + user.username,
     data: {
       username: user.username,
       password: user.password,
@@ -119,27 +128,15 @@ function isAuth(user, token) {
       Authorization: `Bearer ${token}`,
     },
     withCredentials: true,
-  });
-}
-
-function isLoggedIn(username) {
-  return request({
-    url: "/isLoggedIn",
-    method: "GET",
-    data: { username: username },
   });
 }
 
 const AuthService = {
-  signup,
   login,
-  editProfile,
+  verifyToken,
+  signup,
   logout,
-  isAuth, // TEST: remove
-  isLoggedIn,
-  currentUser: currentUserSubject.asObservable(),
-  get currentUserValue() {
-    return currentUserSubject.value;
-  },
+  editProfile,
+  remove,
 };
 export default AuthService;

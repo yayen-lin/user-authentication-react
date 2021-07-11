@@ -37,7 +37,7 @@ function release(conn) {
 }
 
 /**
- * Defines executing query and exports
+ * Defines executing query
  */
 exports.execQuery = (
   type,
