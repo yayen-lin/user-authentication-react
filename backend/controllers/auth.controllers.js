@@ -187,12 +187,12 @@ exports.adminLoginAction = (req, res) => {
       // // adds cookie to the response
       // res.cookie("Carmax168_cookie", token, cookieOptions);
 
-      delete dbResponse.password;
-      return Response.sendResponse({
-        res,
-        responseBody: { user: dbResponse, token, refresh: refreshToken },
-        message: "Login successful.",
-      });
+      // delete dbResponse.password;
+      // return Response.sendResponse({
+      //   res,
+      //   responseBody: { user: dbResponse, token, refresh: refreshToken },
+      //   message: "Login successful.",
+      // });
 
       // TODO: create session for logged in user.
       // let sess = req.session; // a server-side key/val store
@@ -238,3 +238,52 @@ exports.me = async (req, res) => {
     });
   }
 };
+
+exports.adminLogoutAction = (req, res) => {
+  // res.cookie("Carmax168_cookie", "logout", {
+  //   // cookie expires after 2 sec from the time it is set.
+  //   expires: new Date(Date.now() + 2 * 1000),
+  //   httpOnly: true,
+  // });
+  try {
+    return Response.sendResponse({
+      res,
+      message: "Successfully logged out.",
+      statusCode: 200,
+    });
+  } catch (error) {
+    console.log(errer);
+    return Response.sendErrorResponse({
+      res,
+      message: "Unable to log out.",
+      statusCode: 400,
+    });
+  }
+};
+
+// // TODO: session is not 'destroyed' and cookie is not 'cleared';
+// exports.adminLogoutAction = (req, res) => {
+//   console.log("auth.controllers - logout");
+//   res.cookie("Carmax168_cookie", "logout", {
+//     // cookie expires after 2 sec from the time it is set.
+//     expires: new Date(Date.now() + 2 * 1000),
+//     httpOnly: true,
+//   });
+//   console.log("req.session before destroyed: ", req.session);
+
+//   // session destroy set current session to undefined
+//   req.session.destroy((err) => {
+//     if (err) {
+//       return res.status(200).json({
+//         auth: true,
+//         message: "Failed to destroy session during logout",
+//       });
+//     }
+//   });
+//   console.log("session destroyed");
+//   console.log("req.session after destroyed: ", req.session);
+//   return res.status(200).json({
+//     auth: false,
+//     message: "Successfully logged out!",
+//   });
+// };

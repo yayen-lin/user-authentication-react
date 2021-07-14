@@ -110,8 +110,16 @@ exports.decodeHeader = (req, res, next) => {
  * @param {*} next
  */
 exports.requireLogin = async (req, res, next) => {
-  console.log("auth.middleware - requireLogin");
-  if (req.user) {
+  // console.log("auth.middleware - requireLogin");
+  // console.log(
+  //   " ----------------------------- req -----------------------------"
+  // );
+  // console.log(req);
+  // console.log(
+  //   " ----------------------------- res -----------------------------"
+  // );
+  // console.log(res);
+  if (res.user) {
     next();
   } else {
     Response.sendErrorResponse({

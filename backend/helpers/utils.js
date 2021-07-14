@@ -50,10 +50,24 @@ exports.generateJWT = (payload) => {
   return jwt.sign({ ...payload }, key, options);
 };
 
-exports.verifyJWT = (payload) => {
-  return jwt.verify(payload, pub_key, verifyOptions);
+/**
+ * Make use of the publicKEY to verify that the privateKEY was
+ * responsible for signing the header and the payload.
+ *
+ * @param {*} token
+ * @returns decoded value of that token
+ */
+exports.verifyJWT = (token) => {
+  // synchronously verifies a given token
+  return jwt.verify(token, pub_key, verifyOptions);
 };
 
+/**
+ * Hashes (encrypt + salt) the given password
+ *
+ * @param {*} password
+ * @returns a hashed password
+ */
 exports.hashPassword = (password) => {
   const hash = bcrypt.hashSync(password, salt);
   return hash;

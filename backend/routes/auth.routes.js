@@ -3,12 +3,12 @@ const router = express.Router();
 
 const {
   adminLoginAction,
-  // adminLogoutAction,
   adminSignupAction,
   me,
+  adminLogoutAction,
 } = require("../controllers/auth.controllers.js");
 
-const { decodeHeader } = require("../middleware/auth.middleware");
+const { decodeHeader, requireLogin } = require("../middleware/auth.middleware");
 
 const { checkDuplicateUser } = require("../helpers/validation");
 
@@ -22,6 +22,9 @@ router.route("/adminLogin").post(adminLoginAction);
 router.route("/me").get(decodeHeader, me);
 
 // logout
+router
+  .route("/adminLogout")
+  .post(decodeHeader, requireLogin, adminLogoutAction);
 // router
 //   .route("/adminLogout")
 //   .post(verifyAndGetUserInfo, requireLogin, adminLogoutAction);
