@@ -47,7 +47,7 @@ exports.generateJWT = (payload) => {
   if (payload && payload.exp) {
     delete options.expiresIn;
   }
-  return jwt.sign(payload, key, options);
+  return jwt.sign({ ...payload }, key, options);
 };
 
 exports.verifyJWT = (payload) => {

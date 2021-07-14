@@ -1,7 +1,7 @@
 /**
  * middleware is run on the server-side.
  * - It is run before any of the code in the routes to verify that the user
- *   making the request is actually authorized
+ *   making the request is authorized
  *
  * @version 1.0.0
  * @author [Yayen Lin](https://github.com/yayen-lin)

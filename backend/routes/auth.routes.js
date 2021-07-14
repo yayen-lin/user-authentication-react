@@ -3,14 +3,12 @@ const router = express.Router();
 
 const {
   adminLoginAction,
-  adminLogoutAction,
+  // adminLogoutAction,
   adminSignupAction,
+  me,
 } = require("../controllers/auth.controllers.js");
 
-const {
-  verifyAndGetUserInfo,
-  requireLogin,
-} = require("../middleware/auth.middleware");
+const { decodeHeader } = require("../middleware/auth.middleware");
 
 const { checkDuplicateUser } = require("../helpers/validation");
 
@@ -18,14 +16,17 @@ const { checkDuplicateUser } = require("../helpers/validation");
 router.route("/adminSignup").post(checkDuplicateUser, adminSignupAction);
 
 // login
-router.route("/adminLogin").post(adminLoginAction); // add a .get(adminStayLoggedIn) middleware?
+router.route("/adminLogin").post(adminLoginAction);
+
+// fetch logged in user info
+router.route("/me").get(decodeHeader, me);
 
 // logout
-router
-  .route("/adminLogout")
-  .post(verifyAndGetUserInfo, requireLogin, adminLogoutAction);
+// router
+//   .route("/adminLogout")
+//   .post(verifyAndGetUserInfo, requireLogin, adminLogoutAction);
 
 // verify token
-router.route(`/verifyToken?token=:token`).get(verifyAndGetUserInfo);
+// router.route(`/verifyToken?token=:token`).get(verifyAndGetUserInfo);
 
 module.exports = router; // We need this at the end of every route file

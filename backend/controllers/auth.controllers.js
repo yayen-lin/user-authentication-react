@@ -95,203 +95,146 @@ exports.adminSignupAction = (req, res) => {
 
 /**
  * Admin login action
+ *
  * @param {*} req
  * @param {*} res
  * @returns
  */
 exports.adminLoginAction = (req, res) => {
-  const user = {
-    username: req.body.username,
-    password: req.body.password,
-  };
+  // const user = {
+  //   username: req.body.username,
+  //   password: req.body.password,
+  // };
+  const { username, password } = req.body;
 
-  if (
-    !user.username ||
-    !user.password ||
-    user.username === "" ||
-    user.password === ""
-  ) {
-    return res.status(200).json({
-      message: "Please provide a username and password.",
+  if (Validation.isEmpty(username) || !Validation.validateUsername(username)) {
+    return Response.sendErrorResponse({
+      res,
+      message: "Username is missing.",
+      statusCode: 400,
+    });
+  }
+
+  if (Validation.isEmpty(password) || !Validation.validatePassword(password)) {
+    return Response.sendErrorResponse({
+      res,
+      message: "Password is missing.",
+      statusCode: 400,
     });
   }
 
   authDB
-    .adminLogin(req, res, user)
+    .adminLogin(req, res, username)
     .then(async (results) => {
       console.log("auth.controllers - login - results = ", results);
-      // if result is not returned or password is incorrect with `bcrypt.compare`
-      if (
-        !results[0] ||
-        !(await bcrypt.compare(req.body.password, results[0].password))
-      ) {
-        // wrong password
-        return res.status(200).json({
-          auth: false,
-          message: "Username or password is incorrect.",
-        });
-      } else {
-        // login successfully
-        console.log("Logged in successfully!");
 
-        // TODO: create session for logged in user.
-        // let sess = req.session; // a server-side key/val store
-        // sess.user = results[0].username;
-        // sess.privilege = results[0].privilege;
-        // console.log("YOYOYO! session = ", sess);
+      // results =  [
+      //   RowDataPacket {
+      //     manager_id: 6,
+      //     username: 'andy-01',
+      //     firstname: 'Yayen',
+      //     lastname: 'Lin',
+      //     password: '$2a$10$LSBVvNc8IU.mA9lKHHKka.vmv./MpDVax.5XZRJoxqvqqPzFZJny6',
+      //     privilege: '3',
+      //     active: '1',
+      //     createdOn: 2021-07-11T09:48:55.000Z
+      //   }
+      // ]
 
-        // create jwt
-        const username = results[0].username;
-        const token = jwt.sign({ username: username }, process.env.JWT_SECRET, {
-          expiresIn: process.env.JWT_EXPIRES_IN,
+      const dbResponse = results[0];
+
+      if (!dbResponse)
+        return Response.sendErrorResponse({
+          res,
+          message: "Username does not exist.",
+          statusCode: 400,
         });
 
-        // cookie setting
-        const cookieOptions = {
-          // cookie expires after 90 mins from the time it is set.
-          expires: new Date(
-            Date.now() + process.env.JWT_COOKIE_EXPIRES * 60 * 1000
-          ),
-          httpOnly: true, // for security reason it's recommended to set httpOnly to true
-        };
-
-        // adds cookie to the response
-        res.cookie("Carmax168_cookie", token, cookieOptions);
-
-        return res.status(200).json({
-          auth: true,
-          username: username,
-          token: token,
-          profile: {
-            username: results[0].username,
-            privilege: results[0].privilege,
-          },
-          results: results,
+      if (!Validation.comparePassword(dbResponse.password, password))
+        return Response.sendErrorResponse({
+          res,
+          message: "The password you provided is incorrect",
+          statusCode: 400,
         });
-      }
+
+      // login successfully
+      console.log("Logged in successfully!");
+      console.log("dbResponse", dbResponse);
+
+      // access token - give users access to protected resources
+      const token = Utils.generateJWT(dbResponse); // passing payload to jwt
+
+      // refresh token - allow users request new tokens
+      const refreshExpiry = moment()
+        .utc()
+        .add(3, "days")
+        .endOf("day")
+        .format("X");
+      const refreshToken = Utils.generateJWT({
+        exp: parseInt(refreshExpiry),
+        data: dbResponse.manager_id,
+      });
+
+      // // cookie setting
+      // const cookieOptions = {
+      //   // cookie expires after 90 mins from the time it is set.
+      //   expires: new Date(
+      //     Date.now() + process.env.JWT_COOKIE_EXPIRES * 60 * 1000
+      //   ),
+      //   httpOnly: true, // for security reason it's recommended to set httpOnly to true
+      // };
+
+      // // adds cookie to the response
+      // res.cookie("Carmax168_cookie", token, cookieOptions);
+
+      delete dbResponse.password;
+      return Response.sendResponse({
+        res,
+        responseBody: { user: dbResponse, token, refresh: refreshToken },
+        message: "Login successful.",
+      });
+
+      // TODO: create session for logged in user.
+      // let sess = req.session; // a server-side key/val store
+      // sess.user = results[0].username;
+      // sess.privilege = results[0].privilege;
+      // console.log("YOYOYO! session = ", sess);
     })
     .catch((err) => {
-      // Reject case
       console.log(err);
-      return res.status(500).json({
-        auth: false,
-        messsage: "Login failed due to server error.",
+      return Response.sendErrorResponse({
+        res,
+        message: err,
+        statusCode: 500,
       });
     });
 };
 
-exports.adminUpdateUserAction = (req, res) => {
-  const newInfo = {
-    username: req.body.username,
-    password: req.body.password,
-    privilege: req.body.privilege,
-  };
-
-  if (
-    !newInfo.username ||
-    !newInfo.password ||
-    newInfo.username === "" ||
-    newInfo.password === ""
-  ) {
-    return res.status(200).json({
-      auth: true,
-      message: "Please provide a username and password.",
+/**
+ * fetch logged in user info
+ * @param {*} req
+ * @param {*} res
+ * @returns current logged in user info
+ */
+exports.me = async (req, res) => {
+  try {
+    return Response.sendResponse({
+      res,
+      message: "User details successfully fetched",
+      responseBody: {
+        username: res.user.username,
+        firstname: res.user.firstname || null,
+        lastname: res.user.lastname || null,
+        manager_id: res.user.manager_id,
+        token: res.token,
+      },
+    });
+  } catch (error) {
+    console.log(error);
+    return Response.sendErrorResponse({
+      res,
+      message: "Unable to fetch currently logged in user information.",
+      statusCode: 400,
     });
   }
-
-  authDB
-    .adminUpdate(req, res, newInfo)
-    .then(async (data) => {
-      console.log("auth.controllers - update - data = ", data);
-      console.log("auth.controllers - update - newInfo = ", newInfo);
-      // create token and insert cookie
-      const token = jwt.sign(
-        { username: newInfo.username },
-        process.env.JWT_SECRET,
-        { expiresIn: process.env.JWT_EXPIRES_IN }
-      );
-
-      // create cookie
-      const cookieOptions = {
-        // cookie expires after 90 mins from the time it is set.
-        expires: new Date(
-          Date.now() + process.env.JWT_COOKIE_EXPIRES * 60 * 1000
-        ),
-        httpOnly: true,
-      };
-
-      // can specify any name for cookie
-      // need to decode the token to get username
-      res.cookie("Carmax168_cookie", token, cookieOptions);
-      console.log("YOYOYO! TOKEN: ", token);
-
-      return res.status(200).json({
-        auth: true,
-        username: newInfo.username,
-        token: token,
-        profile: {
-          username: newInfo.username,
-          privilege: newInfo.privilege,
-        },
-      });
-    })
-    .catch((err) => {
-      console.log(err);
-      return res.status(500).json({
-        auth: true,
-        message: "Failed to update user due to server error.",
-      });
-    });
-};
-
-exports.adminDeleteUserAction = (req, res) => {
-  authDB
-    .adminDelete(req, res)
-    .then((data) => {
-      //set cookie to user logged out
-      console.log("auth.controllers - delete - data = ", data);
-      res.cookie("Carmax168_cookie", "logout", {
-        // cookie expires after 2 sec from the time it is set.
-        expires: new Date(Date.now() + 2 * 1000),
-        httpOnly: true,
-      });
-
-      return res.status(200).json({
-        auth: true,
-        message: "User account deleted.",
-      });
-    })
-    .catch((err) => {
-      return res.status(500).json({
-        auth: true,
-        message: "Failed to delete user due to server error.",
-      });
-    });
-};
-
-// TODO: session is not 'destroyed' and cookie is not 'cleared';
-exports.adminLogoutAction = (req, res) => {
-  console.log("auth.controllers - logout");
-  res.cookie("Carmax168_cookie", "logout", {
-    // cookie expires after 2 sec from the time it is set.
-    expires: new Date(Date.now() + 2 * 1000),
-    httpOnly: true,
-  });
-  console.log("req.session before destroyed: ", req.session);
-
-  // session destroy set current session to undefined
-  req.session.destroy((err) => {
-    if (err) {
-      return res.status(200).json({
-        auth: true,
-        message: "Failed to destroy session during logout",
-      });
-    }
-  });
-  console.log("session destroyed");
-  console.log("req.session after destroyed: ", req.session);
-  return res.status(200).json({
-    auth: false,
-    message: "Successfully logged out!",
-  });
 };

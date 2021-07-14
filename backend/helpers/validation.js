@@ -5,11 +5,16 @@
  * @author [Yayen Lin](https://github.com/yayen-lin)
  */
 
+// dependencies
 const Joi = require("joi");
+const bcrypt = require("bcryptjs");
+
+// self-defined helper functions
 const authDB = require("../models/auth.models");
 const { execQuery } = require("../query");
 const Response = require("./response");
 
+// private vars
 const passwordMinLength = 2;
 const usernameMinLength = 2;
 
@@ -54,7 +59,7 @@ exports.isValidEmail = (email) => {
  * @param {string, integer} input
  * @returns {Boolean} true if the given input is undefined or empty "", false otherwise.
  */
-const isEmpty = (input) => {
+exports.isEmpty = (input) => {
   // undefined or empty
   if (input === undefined || input === "") return true;
   // replace input string with "" and the length > 0 returns false
@@ -96,4 +101,15 @@ exports.checkDuplicateUser = async (req, res, next) => {
       });
     return next();
   });
+};
+
+/**
+ * bcrypt compare encrypted + salted password with the user password.
+ *
+ * @param {*} hash - encrypted + salted (hashed) password
+ * @param {*} password - user's logged in password
+ * @returns {Boolean} true if same and false otherwise
+ */
+exports.comparePassword = (hash, password) => {
+  return bcrypt.compareSync(password, hash);
 };
