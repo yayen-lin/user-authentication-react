@@ -227,6 +227,8 @@ exports.me = async (req, res) => {
         firstname: res.user.firstname || null,
         lastname: res.user.lastname || null,
         manager_id: res.user.manager_id,
+        privilege: res.user.privilege,
+        active: res.user.active,
         token: res.token,
       },
     });

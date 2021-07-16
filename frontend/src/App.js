@@ -47,6 +47,10 @@ class App extends Component {
     this.getInfo();
   }
 
+  /**
+   * get the user info and set isLoggedIn to true if a cookie with token is found in the cookies storage;
+   * otherwise set isLoggedIn to false.
+   */
   getInfo() {
     AuthService.getUserInfo()
       .then((response) => {
