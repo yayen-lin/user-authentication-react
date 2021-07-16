@@ -23,13 +23,9 @@ import "react-toastify/dist/ReactToastify.css";
 
 // auth
 import LoginAndRegView from "./_components/auth/LoginAndRegView";
-import LoginView from "./_components/auth/LoginView";
-import SignupView from "./_components/auth/SignupView";
 
 // admin
-import Profile from "./_components/admin/Profile";
 import Dashboard from "./_components/admin/Dashboard";
-import StaffManager from "./_components/admin/StaffManager";
 
 // guest views
 import Home from "./_components/guestView/Home";
@@ -39,11 +35,38 @@ class App extends Component {
   constructor(props) {
     super(props);
     this.state = {
-      currentUser: "",
+      currentUser: {},
       token: "",
       refresh: "",
       authLoading: "true",
+      isLoggedIn: false,
     };
+  }
+
+  componentDidMount() {
+    this.getInfo();
+  }
+
+  getInfo() {
+    AuthService.getUserInfo()
+      .then((response) => {
+        console.log(response);
+        this.setState({
+          currentUser: response.data,
+          token: response.token,
+          refresh: response.refresh,
+          isLoggedIn: true,
+        });
+      })
+      .catch((error) => {
+        console.log(error);
+        this.setState({
+          currentUser: "",
+          token: "",
+          refresh: "",
+          isLoggedIn: false,
+        });
+      });
   }
 
   /**
@@ -51,12 +74,13 @@ class App extends Component {
    *
    * @param {*} resData: response from the server
    */
-  setToLoggedIn(resData) {
-    if (resData)
+  setToLoggedIn(response) {
+    if (response)
       this.setState({
-        currentUser: resData.user,
-        token: resData.token,
-        refresh: resData.refresh,
+        currentUser: response.user,
+        token: response.token,
+        refresh: response.refresh,
+        isLoggedIn: true,
       });
   }
 
@@ -64,7 +88,12 @@ class App extends Component {
    * Clear our logged out user info to the state
    */
   setToLoggedOut() {
-    this.setState({ currentUser: "" });
+    this.setState({
+      currentUser: "",
+      token: "",
+      refresh: "",
+      isLoggedIn: false,
+    });
   }
 
   // visitor (if not logged in)
@@ -204,7 +233,7 @@ class App extends Component {
           />
           <div>
             <Navigation
-              isLoggedIn={() => this.isLoggedIn()}
+              isLoggedIn={this.state.isLoggedIn}
               logout={() => this.logout()}
               isAdmin={() => this.isAdmin()}
               isManager={() => this.isManager()}

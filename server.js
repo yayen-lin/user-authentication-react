@@ -111,11 +111,6 @@ global.bcrypt = bcrypt;
 const authRoutes = require("./backend/routes/auth.routes");
 app.use("/", authRoutes);
 
-// temp - TODO: remove this
-app.get("/session", function (req, res) {
-  res.json(req.session);
-});
-
 // ----------------------- production build -----------------------
 // Express only serves static assets in production
 if (IN_PROD) {

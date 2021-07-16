@@ -72,7 +72,7 @@ function signup(user) {
       lastname: user.lastname,
       password: user.password,
     },
-    withCredentials: true,
+    // withCredentials: true,
   });
 }
 
@@ -82,9 +82,17 @@ function logout(token) {
     method: "POST",
     url: "/adminLogout",
     withCredentials: true,
-    headers: {
-      Authorization: `Bearer ${token}`,
-    },
+    // headers: {
+    //   Authorization: `Bearer ${token}`,
+    // },
+  });
+}
+
+function getUserInfo(token) {
+  return request({
+    method: "GET",
+    url: "/me",
+    withCredentials: true,
   });
 }
 
@@ -132,6 +140,9 @@ const AuthService = {
   login,
   signup,
   logout,
+  getUserInfo,
+
+  // not implemented yet
   editProfile,
   remove,
 };

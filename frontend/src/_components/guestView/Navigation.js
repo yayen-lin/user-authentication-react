@@ -160,7 +160,7 @@ class Navigation extends Component {
   }
 
   render() {
-    let navbarContent = this.props.isLoggedIn()
+    let navbarContent = this.props.isLoggedIn
       ? this.state.navbarAdmin
       : this.state.navbarUser;
 

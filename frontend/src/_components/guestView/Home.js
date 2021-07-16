@@ -73,6 +73,19 @@ class Home extends Component {
     );
   }
 
+  btnTest() {
+    return (
+      <Button
+        variant="dark"
+        onClick={() => {
+          console.log(document.cookie);
+        }}
+      >
+        print token
+      </Button>
+    );
+  }
+
   render() {
     return (
       <Container>
@@ -80,6 +93,7 @@ class Home extends Component {
         <hr />
         {this.getTabs()}
         {this.getButton()}
+        {this.btnTest()}
       </Container>
     );
   }

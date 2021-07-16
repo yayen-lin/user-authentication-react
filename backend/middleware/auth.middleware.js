@@ -64,10 +64,13 @@ exports.authenticate = () => {
  * @returns
  */
 exports.decodeHeader = (req, res, next) => {
+  console.log("--------------------------------------------------");
+  console.log(req.cookies["Carmax168_cookie"]);
   let token =
     req.headers["x-access-token"] ||
     req.headers.authorization ||
-    req.body.token;
+    req.body.token ||
+    req.cookies["Carmax168_cookie"];
   console.log(token, "------------------");
 
   if (!token) {
@@ -110,15 +113,7 @@ exports.decodeHeader = (req, res, next) => {
  * @param {*} next
  */
 exports.requireLogin = async (req, res, next) => {
-  // console.log("auth.middleware - requireLogin");
-  // console.log(
-  //   " ----------------------------- req -----------------------------"
-  // );
-  // console.log(req);
-  // console.log(
-  //   " ----------------------------- res -----------------------------"
-  // );
-  // console.log(res);
+  console.log("auth.middleware - requireLogin");
   if (res.user) {
     next();
   } else {
