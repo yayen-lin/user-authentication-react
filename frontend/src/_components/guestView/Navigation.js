@@ -107,7 +107,7 @@ class Navigation extends Component {
   getRoute(content) {
     switch (content) {
       case "Logout":
-        return "/logout";
+        return "/adminLogout";
       case "Login":
         return "/login-and-reg";
       case "Help":

@@ -9,6 +9,7 @@ const bcrypt = require("bcryptjs");
 const jwt = require("jsonwebtoken");
 const fs = require("fs");
 
+// keygen: https://gist.github.com/ygotthilf/baa58da5c3dd1f69fae9
 const key = fs.readFileSync("./private.key", "utf8");
 const pub_key = fs.readFileSync("./public.key", "utf8");
 
@@ -20,7 +21,7 @@ const verifyOptions = {
   issuer: iss,
   subject: sub,
   audience: aud,
-  expiresIn: "8784h",
+  expiresIn: "15m", // Common practice is to keep it around 15 minutes
   algorithm: ["RS256"],
 };
 

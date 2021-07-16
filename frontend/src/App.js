@@ -15,7 +15,6 @@ import {
 
 // service and helpers
 import AuthService from "./_services/auth.service";
-import { getToken } from "./_helpers/Common";
 
 // imports for action notification
 // reference: https://fkhadra.github.io/react-toastify/introduction
@@ -34,10 +33,6 @@ import StaffManager from "./_components/admin/StaffManager";
 
 // guest views
 import Home from "./_components/guestView/Home";
-import Help from "./_components/guestView/Help";
-import About from "./_components/guestView/About";
-import Contact from "./_components/guestView/Contact";
-import GuestForm from "./_components/guestView/GuestForm";
 import Navigation from "./_components/guestView/Navigation";
 
 class App extends Component {
@@ -45,19 +40,10 @@ class App extends Component {
     super(props);
     this.state = {
       currentUser: "",
-      username: "",
+      token: "",
+      refresh: "",
       authLoading: "true",
     };
-  }
-
-  componentDidMount() {}
-
-  // TODO: set Auth
-  setAuthAndSession() {
-    const token = getToken();
-    if (!token) return;
-
-    // verify token
   }
 
   /**
@@ -67,14 +53,18 @@ class App extends Component {
    */
   setToLoggedIn(resData) {
     if (resData)
-      this.setState({ currentUser: resData, username: resData.username });
+      this.setState({
+        currentUser: resData.user,
+        token: resData.token,
+        refresh: resData.refresh,
+      });
   }
 
   /**
    * Clear our logged out user info to the state
    */
   setToLoggedOut() {
-    this.setState({ currentUser: "", username: "" });
+    this.setState({ currentUser: "" });
   }
 
   // visitor (if not logged in)
@@ -92,18 +82,29 @@ class App extends Component {
   // - can do simple edition to the site (e.g. update site info)
   isAdmin() {
     if (this.isLoggedIn())
-      return this.state.currentUser.profile.privilege.toString() === "1";
+      return this.state.currentUser.privilege.toString() === "1";
+    return false;
+  }
+
+  // Vice Admin (loggedIn = true)
+  // - the person that has higher authority
+  // - privilege is set to 2
+  // - has access to manage site managers and admins
+  // - can do simple edition to the site (e.g. update site info)
+  isAdmin() {
+    if (this.isLoggedIn())
+      return this.state.currentUser.privilege.toString() === "2";
     return false;
   }
 
   // Manager (loggedIn = true)
   // - a person that manage the site
-  // - privilege is set to 0
+  // - privilege is set to 3
   // - has no access to manage site managers and admins
   // - can do simple edition to the site (e.g. update site info)
   isManager() {
     if (this.isLoggedIn())
-      return this.state.currentUser.profile.privilege.toString() === "0";
+      return this.state.currentUser.privilege.toString() === "3";
     return false;
   }
 
@@ -153,19 +154,13 @@ class App extends Component {
   async login(user) {
     // console.log("App.js - login - store.getState() = ", store.getState());
     return AuthService.login(user).then((response) => {
-      if (response.message) {
+      if (!response.status) {
         // When the API returns `message`, that means the login has failed
         toast.error(response.message);
         return -1;
       } else {
         console.log(response);
-        // console.log(user);
-        this.setToLoggedIn(response);
-        // this.setToLoginStatus(
-        //   response.username,
-        //   response.token,
-        //   response.profile
-        // );
+        this.setToLoggedIn(response.data);
 
         // We only need to import toast in other components
         // if we want to make a notification there.
@@ -176,20 +171,9 @@ class App extends Component {
     });
   }
 
-  async isAuth(user, token) {
-    return AuthService.isAuth(user, token).then((response) => {
-      if (response.error) {
-        console.log("AN ERROR OCCURRED WHILE ISAUTH WAS CALLED");
-        toast.error(response.message);
-      } else {
-        console.log(response);
-        console.log("ISAUTH WAS JUST CALLED");
-      }
-    });
-  }
-
   async logout() {
-    return AuthService.logout().then((response) => {
+    console.log("LOGGING OUT");
+    return AuthService.logout(this.state.token).then((response) => {
       if (response.error) {
         toast.error(response.message);
       } else {
@@ -209,7 +193,7 @@ class App extends Component {
         <Router /*history={history}*/>
           <ToastContainer
             position="top-right"
-            autoClose={3000} // set to 3 sec
+            autoClose={1000} // set to 1 sec
             hideProgressBar={false}
             newestOnTop={false}
             closeOnClick
@@ -220,7 +204,6 @@ class App extends Component {
           />
           <div>
             <Navigation
-              username={this.state.username}
               isLoggedIn={() => this.isLoggedIn()}
               logout={() => this.logout()}
               isAdmin={() => this.isAdmin()}
@@ -230,21 +213,6 @@ class App extends Component {
               <Route exact path="/home">
                 <Home />
               </Route>
-              <Route exact path="/help">
-                <Help />
-              </Route>
-              <Route exact path="/form">
-                <GuestForm />
-              </Route>
-              <Route exact path="/about">
-                <About />
-              </Route>
-              <Route exact path="/signup">
-                <SignupView />
-              </Route>
-              <Route exact path="/login">
-                <LoginView />
-              </Route>
               <Route exact path="/login-and-reg">
                 <LoginAndRegView
                   login={(user) => this.login(user)}
@@ -252,25 +220,8 @@ class App extends Component {
                   isLoggedIn={() => this.isLoggedIn()}
                 />
               </Route>
-              <Route exact path="/contact">
-                <Contact />
-              </Route>
               <Route exact path="/dashboard">
-                <Dashboard />
-              </Route>
-              <Route exact path={"/profile/:" + this.state.username}>
-                <Profile
-                  currentUser={this.state.currentUser}
-                  isLoggedIn={() => this.isLoggedIn()}
-                  isAuth={(user, token) => this.isAuth(user, token)}
-                />
-              </Route>
-              <Route exact path={"/staff-manager/:" + this.state.username}>
-                <StaffManager
-                  currentUser={this.state.currentUser}
-                  isAdmin={() => this.isAdmin()}
-                  isLoggedIn={() => this.isLoggedIn()}
-                />
+                <Dashboard currentUser={this.state.currentUser} />
               </Route>
 
               {/* Redirect to home page */}
@@ -278,7 +229,7 @@ class App extends Component {
                 <Redirect to="/home" />
               </Route>
               {/* Redirect logout to home page */}
-              <Route exact path="/logout">
+              <Route exact path="/adminLogout">
                 <Redirect push to="/home" />
               </Route>
               {/* 404 Not Found */}

@@ -175,24 +175,25 @@ exports.adminLoginAction = (req, res) => {
         data: dbResponse.manager_id,
       });
 
-      // // cookie setting
-      // const cookieOptions = {
-      //   // cookie expires after 90 mins from the time it is set.
-      //   expires: new Date(
-      //     Date.now() + process.env.JWT_COOKIE_EXPIRES * 60 * 1000
-      //   ),
-      //   httpOnly: true, // for security reason it's recommended to set httpOnly to true
-      // };
+      // cookie setting
+      const cookieOptions = {
+        // cookie expires after 90 mins from the time it is set.
+        expires: new Date(
+          Date.now() + process.env.JWT_COOKIE_EXPIRES * 60 * 1000
+        ),
+        httpOnly: true, // for security reason it's recommended to set httpOnly to true
+        sameSite: true,
+      };
 
-      // // adds cookie to the response
-      // res.cookie("Carmax168_cookie", token, cookieOptions);
+      // adds cookie to the response
+      res.cookie("Carmax168_cookie", token, cookieOptions);
 
-      // delete dbResponse.password;
-      // return Response.sendResponse({
-      //   res,
-      //   responseBody: { user: dbResponse, token, refresh: refreshToken },
-      //   message: "Login successful.",
-      // });
+      delete dbResponse.password;
+      return Response.sendResponse({
+        res,
+        responseBody: { user: dbResponse, token, refresh: refreshToken },
+        message: "Login successful.",
+      });
 
       // TODO: create session for logged in user.
       // let sess = req.session; // a server-side key/val store
@@ -240,11 +241,13 @@ exports.me = async (req, res) => {
 };
 
 exports.adminLogoutAction = (req, res) => {
-  // res.cookie("Carmax168_cookie", "logout", {
-  //   // cookie expires after 2 sec from the time it is set.
-  //   expires: new Date(Date.now() + 2 * 1000),
-  //   httpOnly: true,
-  // });
+  console.log("LOGGIN OUT!!");
+  res.cookie("Carmax168_cookie", "logout", {
+    // cookie expires after 2 sec from the time it is set.
+    expires: new Date(Date.now() + 2 * 1000),
+    httpOnly: true,
+    sameSite: true,
+  });
   try {
     return Response.sendResponse({
       res,
