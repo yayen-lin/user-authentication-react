@@ -64,8 +64,6 @@ exports.authenticate = () => {
  * @returns
  */
 exports.decodeHeader = (req, res, next) => {
-  console.log("--------------------------------------------------");
-  console.log(req.cookies["Carmax168_cookie"]);
   let token =
     req.headers["x-access-token"] ||
     req.headers.authorization ||

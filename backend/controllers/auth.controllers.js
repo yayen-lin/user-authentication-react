@@ -20,7 +20,7 @@ const datetimeConverter = require("../helpers/datetimeConverter");
 
 // tools
 const moment = require("moment");
-// const session = require("express-session");
+const session = require("express-session");
 
 /**
  * Admin sign up action
@@ -101,10 +101,6 @@ exports.adminSignupAction = (req, res) => {
  * @returns
  */
 exports.adminLoginAction = (req, res) => {
-  // const user = {
-  //   username: req.body.username,
-  //   password: req.body.password,
-  // };
   const { username, password } = req.body;
 
   if (Validation.isEmpty(username) || !Validation.validateUsername(username)) {
@@ -186,7 +182,12 @@ exports.adminLoginAction = (req, res) => {
       };
 
       // adds cookie to the response
-      res.cookie("Carmax168_cookie", token, cookieOptions);
+      res.cookie(process.env.JWT_NAME, token, cookieOptions);
+
+      // TODO: create session for logged in user.
+      let sess = req.session; // a server-side key/val store
+      sess.user_id = dbResponse.manager_id;
+      console.log("YOYOYO! session = ", sess);
 
       delete dbResponse.password;
       return Response.sendResponse({
@@ -194,12 +195,6 @@ exports.adminLoginAction = (req, res) => {
         responseBody: { user: dbResponse, token, refresh: refreshToken },
         message: "Login successful.",
       });
-
-      // TODO: create session for logged in user.
-      // let sess = req.session; // a server-side key/val store
-      // sess.user = results[0].username;
-      // sess.privilege = results[0].privilege;
-      // console.log("YOYOYO! session = ", sess);
     })
     .catch((err) => {
       console.log(err);
@@ -218,6 +213,11 @@ exports.adminLoginAction = (req, res) => {
  * @returns current logged in user info
  */
 exports.me = async (req, res) => {
+  console.log("res.token: ");
+  console.log(res.token);
+  console.log("req.sessionID: ");
+  console.log(req.sessionID);
+  console.log(req.session);
   try {
     return Response.sendResponse({
       res,
@@ -244,12 +244,25 @@ exports.me = async (req, res) => {
 
 exports.adminLogoutAction = (req, res) => {
   console.log("LOGGIN OUT!!");
+
+  // replace cookie
   res.cookie("Carmax168_cookie", "logout", {
     // cookie expires after 2 sec from the time it is set.
     expires: new Date(Date.now() + 2 * 1000),
     httpOnly: true,
     sameSite: true,
   });
+
+  // destroy session
+  req.session.destroy((err) => {
+    if (err)
+      return Response.sendErrorResponse({
+        res,
+        message: "Something happened while destroying the session.",
+        statusCode: 400,
+      });
+  });
+
   try {
     return Response.sendResponse({
       res,
