@@ -171,32 +171,42 @@ exports.adminLoginAction = (req, res) => {
         data: dbResponse.manager_id,
       });
 
-      // cookie setting
-      const cookieOptions = {
+      // cookie setting w/ access token
+      const accessCookieOptions = {
         // cookie expires after 90 mins from the time it is set.
         expires: new Date(
-          Date.now() + process.env.JWT_COOKIE_EXPIRES * 60 * 1000
+          Date.now() + process.env.JWT_COOKIE_ACCESS_EXPIRES * 60 * 1000
         ),
         httpOnly: true, // for security reason it's recommended to set httpOnly to true
         sameSite: true,
       };
 
-      // adds cookie to the response
-      res.cookie(process.env.JWT_NAME, token, cookieOptions);
+      // cookie setting w/ refresh token
+      const refreshCookieOptions = {
+        // cookie expires after 3 days from the time it is set.
+        expires: new Date(
+          Date.now() + process.env.JWT_COOKIE_REFRESH_EXPIRES * 60 * 60 * 1000
+        ),
+        httpOnly: true, // for security reason it's recommended to set httpOnly to true
+        sameSite: true,
+      };
+
+      // add cookies to the response
+      res.cookie(process.env.JWT_ACCESS, token, accessCookieOptions);
+      res.cookie(process.env.JWT_REFRESH, refreshToken, refreshCookieOptions);
 
       // TODO: create session for logged in user.
       let sess = req.session;
       sess.user_id = dbResponse.manager_id;
       console.log("session", sess);
 
-      delete dbResponse.password;
+      delete dbResponse.password; // removed password before return
       return Response.sendResponse({
         res,
         responseBody: {
           user: dbResponse,
           token,
           refresh: refreshToken,
-          session: sess,
         },
         message: "Login successful.",
       });
@@ -243,21 +253,83 @@ exports.me = async (req, res) => {
   }
 };
 
-exports.refreshTokenAction = async (req, res) => {
-  // if token exists
-  console.log("----------------------------------------- req");
-  console.log(req.token);
-  console.log(req.user);
-  console.log(req.sessionID);
-  console.log("----------------------------------------- res");
-  console.log(res.token);
-  console.log(res.user);
-  return Response.sendResponse({
-    res,
-    message: "printed refresh token",
-    statusCode: 200,
-  });
-};
+// exports.refreshTokenAction = async (req, res) => {
+//   // console.log("----------------------------------------- req");
+//   // console.log(req.token);
+//   // console.log(req.user);
+//   // console.log(req.sessionID);
+//   // console.log("----------------------------------------- res");
+//   // console.log(res.token);
+//   // console.log(res.user);
+
+//   const { refresh } = req.body;
+//   // if refresh token missing
+//   if (!refresh)
+//     return Response.sendErrorResponse({
+//       res,
+//       message: "No refresh token provided.",
+//       statusCode: 403,
+//     });
+
+//   // if refresh token expires
+//   if (refresh) {
+//     try {
+//       const decoded = Utils.verifyJWT(refresh);
+//       // {
+//       //   exp: 1626825599,
+//       //   data: 6,
+//       //   iat: 1626500973,
+//       //   aud: 'jwt-node',
+//       //   iss: 'jwt-node',
+//       //   sub: 'jwt-node'
+//       // }
+//       const exp = decoded.exp || null;
+//       const now = new Date(Date.now()).getTime() / 1000;
+
+//       // if no exp in decoded or id doesn't match
+//       if (!exp || decoded.data !== res.user.manager_id)
+//         return Response.sendErrorResponse({
+//           res,
+//           message: "Invalid refresh token.",
+//           statusCode: 403,
+//         });
+
+//       // if refresh token expires
+//       if (now > exp)
+//         return Response.sendErrorResponse({
+//           res,
+//           message: "Refresh token expired, please log back in again.",
+//           statusCode: 403,
+//         });
+
+//       // generate new access token using logged in user's info
+//       delete res.user.iat;
+//       delete res.user.exp;
+//       delete res.user.aud;
+//       delete res.user.iss;
+//       delete res.user.sub;
+//       const newToken = Utils.generateJWT(res.user);
+
+//       delete res.user.password; // removed password before return
+//       return Response.sendResponse({
+//         res,
+//         message: "Token renewed.",
+//         responseBody: {
+//           user: res.user,
+//           token: newToken,
+//           refresh: refresh,
+//         },
+//         statusCode: 200,
+//       });
+//     } catch (err) {
+//       return Response.sendErrorResponse({
+//         res,
+//         message: err,
+//         statusCode: 500,
+//       });
+//     }
+//   }
+// };
 
 /**
  * Admin logout action
@@ -270,7 +342,7 @@ exports.adminLogoutAction = (req, res) => {
   console.log("LOGGIN OUT!!");
 
   // replace cookie with logout cookie
-  res.cookie(process.env.JWT_NAME, "logout", {
+  res.cookie(process.env.JWT_ACCESS, "logout", {
     // cookie expires after 2 sec from the time it is set.
     expires: new Date(Date.now() + 2 * 1000),
     httpOnly: true,

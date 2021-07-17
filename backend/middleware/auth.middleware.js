@@ -28,7 +28,7 @@ exports.authenticate = () => {
         req.headers["x-access-token"] ||
         req.headers.authorization ||
         req.body.token ||
-        req.cookies[process.env.JWT_NAME];
+        req.cookies[process.env.JWT_ACCESS];
       console.log(token, "------------------");
 
       if (!token) throw new Error("No token provided.");
@@ -68,7 +68,7 @@ exports.decodeHeader = (req, res, next) => {
     req.headers["x-access-token"] ||
     req.headers.authorization ||
     req.body.token ||
-    req.cookies[process.env.JWT_NAME];
+    req.cookies[process.env.JWT_ACCESS];
   console.log(token, "------------------");
 
   if (!token) {
@@ -121,6 +121,23 @@ exports.requireLogin = async (req, res, next) => {
       statusCode: 403,
     });
   }
+};
+
+/**
+ * if access token has expired, renew the access token and call next();
+ * if not, call next(); directly.
+ * @param {*} req
+ * @param {*} res
+ * @param {*} next
+ */
+exports.checkTokenExpiry = async (req, res, next) => {
+  console.log("auth.middleware - checkTokenExpiry");
+
+  console.log(req.body);
+  console.log(res.user);
+  console.log(res.token);
+  console.log(res.refresh);
+  next();
 };
 
 exports.verifyUsername = async (req, res, next) => {};

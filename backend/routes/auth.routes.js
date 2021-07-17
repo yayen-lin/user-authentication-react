@@ -5,11 +5,14 @@ const {
   adminLoginAction,
   adminSignupAction,
   me,
-  refreshTokenAction,
   adminLogoutAction,
 } = require("../controllers/auth.controllers.js");
 
-const { decodeHeader, requireLogin } = require("../middleware/auth.middleware");
+const {
+  decodeHeader,
+  requireLogin,
+  checkTokenExpiry,
+} = require("../middleware/auth.middleware");
 
 const { checkDuplicateUser } = require("../helpers/validation");
 
@@ -24,7 +27,7 @@ router.route("/me").get(decodeHeader, me);
 
 router
   .route("/refreshToken")
-  .post(decodeHeader, requireLogin, refreshTokenAction);
+  .post(decodeHeader, requireLogin, checkTokenExpiry);
 
 // logout
 router
