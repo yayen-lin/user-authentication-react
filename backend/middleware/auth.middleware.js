@@ -89,18 +89,31 @@ exports.decodeHeader = (req, res, next) => {
         statusCode: 401,
       });
   }
+  console.log("got here 1");
 
-  const decoded = Utils.verifyJWT(token);
-  if (!decoded)
-    Response.sendErrorResponse({
+  try {
+    const decoded = Utils.verifyJWT(token);
+    if (decoded) res.user = decoded;
+    res.token = token;
+    return next();
+  } catch (err) {
+    console.log(err);
+
+    // Token Expired
+    if (err.name === "TokenExpiredError")
+      return Response.sendErrorResponse({
+        res,
+        message: "Token has expired",
+        statusCode: 403,
+      });
+
+    // something else went wrong
+    return Response.sendErrorResponse({
       res,
-      message: "invalid signature",
+      message: "Invalid signature",
       statusCode: 403,
     });
-
-  if (decoded) res.user = decoded;
-  res.token = token;
-  return next();
+  }
 };
 
 /**
@@ -126,18 +139,103 @@ exports.requireLogin = async (req, res, next) => {
 /**
  * if access token has expired, renew the access token and call next();
  * if not, call next(); directly.
+ *
  * @param {*} req
  * @param {*} res
  * @param {*} next
  */
-exports.checkTokenExpiry = async (req, res, next) => {
-  console.log("auth.middleware - checkTokenExpiry");
+exports.refreshTokenAction = async (req, res, next) => {
+  // console.log("----------------------------------------- req");
+  // console.log(req.token);
+  // console.log(req.user);
+  // console.log(req.sessionID);
+  // console.log("----------------------------------------- res");
+  // console.log(res.token);
+  // console.log(res.user);
+  console.log("refresh token action~");
 
-  console.log(req.body);
-  console.log(res.user);
-  console.log(res.token);
-  console.log(res.refresh);
-  next();
+  const { token, refresh } = req.body;
+  const now = new Date(Date.now()).getTime() / 1000;
+
+  if (token) {
+    const decoded = Utils.verifyJWT(token);
+    const exp = decoded.exp;
+    // if current access token has not expired
+    if (exp > now) next();
+    // current access token has expired
+    else {
+      // if refresh token missing
+      if (!refresh)
+        return Response.sendErrorResponse({
+          res,
+          message: "No refresh token provided.",
+          statusCode: 403,
+        });
+
+      // if refresh token expires
+      if (refresh) {
+        try {
+          const decoded = Utils.verifyJWT(refresh);
+          // {
+          //   exp: 1626825599,
+          //   data: 6,
+          //   iat: 1626500973,
+          //   aud: 'jwt-node',
+          //   iss: 'jwt-node',
+          //   sub: 'jwt-node'
+          // }
+          const exp = decoded.exp || null;
+
+          // if no exp in decoded or id doesn't match
+          if (!exp || decoded.data !== res.user.manager_id)
+            return Response.sendErrorResponse({
+              res,
+              message: "Invalid refresh token.",
+              statusCode: 403,
+            });
+
+          // if refresh token expires
+          if (now > exp)
+            return Response.sendErrorResponse({
+              res,
+              message: "Refresh token expired, please log back in again.",
+              statusCode: 403,
+            });
+
+          // generate new access token using logged in user's info
+          delete res.user.iat;
+          delete res.user.exp;
+          delete res.user.aud;
+          delete res.user.iss;
+          delete res.user.sub;
+          const newToken = Utils.generateJWT(res.user);
+
+          console.log("Token renewed.");
+          console.log(token, "------------------");
+          res.token = newToken;
+          next();
+
+          // delete res.user.password; // removed password before return
+          // return Response.sendResponse({
+          //   res,
+          //   message: "Token renewed.",
+          //   responseBody: {
+          //     user: res.user,
+          //     token: newToken,
+          //     refresh: refresh,
+          //   },
+          //   statusCode: 200,
+          // });
+        } catch (err) {
+          return Response.sendErrorResponse({
+            res,
+            message: err,
+            statusCode: 500,
+          });
+        }
+      }
+    }
+  }
 };
 
 exports.verifyUsername = async (req, res, next) => {};
