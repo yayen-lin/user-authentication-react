@@ -185,14 +185,19 @@ exports.adminLoginAction = (req, res) => {
       res.cookie(process.env.JWT_NAME, token, cookieOptions);
 
       // TODO: create session for logged in user.
-      let sess = req.session; // a server-side key/val store
+      let sess = req.session;
       sess.user_id = dbResponse.manager_id;
-      console.log("YOYOYO! session = ", sess);
+      console.log("session", sess);
 
       delete dbResponse.password;
       return Response.sendResponse({
         res,
-        responseBody: { user: dbResponse, token, refresh: refreshToken },
+        responseBody: {
+          user: dbResponse,
+          token,
+          refresh: refreshToken,
+          session: sess,
+        },
         message: "Login successful.",
       });
     })
@@ -208,16 +213,12 @@ exports.adminLoginAction = (req, res) => {
 
 /**
  * fetch logged in user info
+ *
  * @param {*} req
  * @param {*} res
  * @returns current logged in user info
  */
 exports.me = async (req, res) => {
-  console.log("res.token: ");
-  console.log(res.token);
-  console.log("req.sessionID: ");
-  console.log(req.sessionID);
-  console.log(req.session);
   try {
     return Response.sendResponse({
       res,
@@ -242,11 +243,18 @@ exports.me = async (req, res) => {
   }
 };
 
+/**
+ * Admin logout action
+ *
+ * @param {*} req
+ * @param {*} res
+ * @returns
+ */
 exports.adminLogoutAction = (req, res) => {
   console.log("LOGGIN OUT!!");
 
   // replace cookie
-  res.cookie("Carmax168_cookie", "logout", {
+  res.cookie(process.env.JWT_NAME, "logout", {
     // cookie expires after 2 sec from the time it is set.
     expires: new Date(Date.now() + 2 * 1000),
     httpOnly: true,
@@ -278,30 +286,3 @@ exports.adminLogoutAction = (req, res) => {
     });
   }
 };
-
-// // TODO: session is not 'destroyed' and cookie is not 'cleared';
-// exports.adminLogoutAction = (req, res) => {
-//   console.log("auth.controllers - logout");
-//   res.cookie("Carmax168_cookie", "logout", {
-//     // cookie expires after 2 sec from the time it is set.
-//     expires: new Date(Date.now() + 2 * 1000),
-//     httpOnly: true,
-//   });
-//   console.log("req.session before destroyed: ", req.session);
-
-//   // session destroy set current session to undefined
-//   req.session.destroy((err) => {
-//     if (err) {
-//       return res.status(200).json({
-//         auth: true,
-//         message: "Failed to destroy session during logout",
-//       });
-//     }
-//   });
-//   console.log("session destroyed");
-//   console.log("req.session after destroyed: ", req.session);
-//   return res.status(200).json({
-//     auth: false,
-//     message: "Successfully logged out!",
-//   });
-// };

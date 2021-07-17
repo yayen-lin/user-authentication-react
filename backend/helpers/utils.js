@@ -40,7 +40,7 @@ exports.generateJWT = (payload) => {
     issuer: iss,
     subject: sub,
     audience: aud,
-    expiresIn: "8784h",
+    expiresIn: "15s", // Common practice is to keep it around 15 minutes
     algorithm: "RS256",
   };
 
