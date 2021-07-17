@@ -5,6 +5,7 @@ const {
   adminLoginAction,
   adminSignupAction,
   me,
+  refreshTokenAction,
   adminLogoutAction,
 } = require("../controllers/auth.controllers.js");
 
@@ -20,6 +21,10 @@ router.route("/adminLogin").post(adminLoginAction);
 
 // fetch logged in user info
 router.route("/me").get(decodeHeader, me);
+
+router
+  .route("/refreshToken")
+  .post(decodeHeader, requireLogin, refreshTokenAction);
 
 // logout
 router

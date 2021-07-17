@@ -27,9 +27,9 @@ exports.authenticate = () => {
       let token =
         req.headers["x-access-token"] ||
         req.headers.authorization ||
-        req.body.token;
-
-      console.log(token, "token");
+        req.body.token ||
+        req.cookies[process.env.JWT_NAME];
+      console.log(token, "------------------");
 
       if (!token) throw new Error("No token provided.");
       if (token.startsWith("Bearer ")) token = token.slice(7, token.length);

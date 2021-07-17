@@ -243,6 +243,22 @@ exports.me = async (req, res) => {
   }
 };
 
+exports.refreshTokenAction = async (req, res) => {
+  // if token exists
+  console.log("----------------------------------------- req");
+  console.log(req.token);
+  console.log(req.user);
+  console.log(req.sessionID);
+  console.log("----------------------------------------- res");
+  console.log(res.token);
+  console.log(res.user);
+  return Response.sendResponse({
+    res,
+    message: "printed refresh token",
+    statusCode: 200,
+  });
+};
+
 /**
  * Admin logout action
  *
@@ -253,7 +269,7 @@ exports.me = async (req, res) => {
 exports.adminLogoutAction = (req, res) => {
   console.log("LOGGIN OUT!!");
 
-  // replace cookie
+  // replace cookie with logout cookie
   res.cookie(process.env.JWT_NAME, "logout", {
     // cookie expires after 2 sec from the time it is set.
     expires: new Date(Date.now() + 2 * 1000),
