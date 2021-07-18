@@ -349,6 +349,14 @@ exports.adminLogoutAction = (req, res) => {
     sameSite: true,
   });
 
+  // replace refresh cookie with logout cookie
+  res.cookie(process.env.JWT_REFRESH, "logout", {
+    // cookie expires after 2 sec from the time it is set.
+    expires: new Date(Date.now() + 2 * 1000),
+    httpOnly: true,
+    sameSite: true,
+  });
+
   // destroy session
   req.session.destroy((err) => {
     if (err)
