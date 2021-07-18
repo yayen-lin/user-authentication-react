@@ -22,7 +22,7 @@ router.route("/adminSignup").post(checkDuplicateUser, adminSignupAction);
 // login
 router.route("/adminLogin").post(adminLoginAction);
 
-// fetch logged in user info
+// fetch logged in user info - keeps user logged in on page refresh
 router.route("/me").get(decodeHeader, refreshTokenAction, me);
 
 // router

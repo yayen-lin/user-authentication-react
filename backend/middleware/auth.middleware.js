@@ -71,6 +71,7 @@ exports.decodeHeader = (req, res, next) => {
     req.cookies[process.env.JWT_ACCESS];
   console.log(token, "------------------");
 
+  // missing token
   if (!token) {
     return Response.sendErrorResponse({
       res,
@@ -79,9 +80,9 @@ exports.decodeHeader = (req, res, next) => {
     });
   }
 
+  // after removing 'Bearer ' and found no token
   if (token.startsWith("Bearer ")) {
-    // Remove Bearer from string
-    token = token.slice(7, token.length);
+    token = token.slice(7, token.length); // remove Bearer from string
     if (!token || token === "")
       Response.sendErrorResponse({
         res,
@@ -89,21 +90,24 @@ exports.decodeHeader = (req, res, next) => {
         statusCode: 401,
       });
   }
-  console.log("got here 1");
 
+  console.log("got here 1");
   try {
+    // check if access token is valid + not expired
     const decoded = Utils.verifyJWT(token);
+
+    // if token is valid, return next();
     if (decoded) res.user = decoded;
     res.token = token;
-    next();
+    return next();
   } catch (err) {
+    // if err is TokenExpiredError
     console.log(err);
-
-    // Token Expired
+    // access token has expired
     if (err.name === "TokenExpiredError")
       // TODO:
-      // instead of throwing error,
-      // refresh the access token here using refresh token!
+      // instead of throwing an error,
+      // refresh the access token here using refresh token and return next()
       return Response.sendErrorResponse({
         res,
         message: "Token has expired",
