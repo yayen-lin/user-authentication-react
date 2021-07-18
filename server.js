@@ -85,7 +85,11 @@ app.use(express.json());
 // app.use(cors(corsOptions));
 // app.use(cors());
 app.use((req, res, next) => {
-  const allowedOrigins = ["https://www.carmax168.com", "http://localhost:8081"];
+  const allowedOrigins = [
+    "https://www.carmax168.com",
+    "http://localhost:8081",
+    "http://127.0.0.1:8081",
+  ];
   const origin = req.headers.origin;
   if (allowedOrigins.includes(origin)) {
     res.setHeader("Access-Control-Allow-Origin", origin);

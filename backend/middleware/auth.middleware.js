@@ -95,12 +95,15 @@ exports.decodeHeader = (req, res, next) => {
     const decoded = Utils.verifyJWT(token);
     if (decoded) res.user = decoded;
     res.token = token;
-    return next();
+    next();
   } catch (err) {
     console.log(err);
 
     // Token Expired
     if (err.name === "TokenExpiredError")
+      // TODO:
+      // instead of throwing error,
+      // refresh the access token here using refresh token!
       return Response.sendErrorResponse({
         res,
         message: "Token has expired",
