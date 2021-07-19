@@ -96,6 +96,19 @@ function getUserInfo(token) {
   });
 }
 
+function refreshToken(user, refresh) {
+  console.log("refresh token - auth service");
+  return request({
+    method: "POST",
+    url: "/refreshToken",
+    withCredentials: true,
+    data: {
+      manager_id: user.manager_id,
+      refresh: refresh,
+    },
+  });
+}
+
 function editProfile(user, token) {
   console.log("auth.service - editProfile - user = ", user);
   console.log("auth.service - editProfile - token = ", token);
@@ -141,6 +154,7 @@ const AuthService = {
   signup,
   logout,
   getUserInfo,
+  refreshToken,
 
   // not implemented yet
   editProfile,

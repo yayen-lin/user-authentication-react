@@ -106,11 +106,14 @@ exports.decodeHeader = (req, res, next) => {
     // access token has expired
     if (err.name === "TokenExpiredError")
       // TODO:
+      // FIXME: - 1
       // instead of throwing an error,
       // refresh the access token here using refresh token and return next()
+      // FIXME: - 2
+      // receive the TokenExpiredError and send a new request from the frontend
       return Response.sendErrorResponse({
         res,
-        message: "Token has expired",
+        message: "TokenExpiredError: your token has expired",
         statusCode: 403,
       });
 

@@ -64,12 +64,19 @@ class App extends Component {
       })
       .catch((error) => {
         console.log(error);
-        this.setState({
-          currentUser: "",
-          token: "",
-          refresh: "",
-          isLoggedIn: false,
-        });
+        const err = error.data || null;
+        if (err !== null && err.message.startsWith("TokenExpiredError")) {
+          // TODO: call refresh token
+          console.log(err);
+          AuthService.refreshToken(this.state.currentUser, this.state.refresh);
+        } else {
+          this.setState({
+            currentUser: "",
+            token: "",
+            refresh: "",
+            isLoggedIn: false,
+          });
+        }
       });
   }
 

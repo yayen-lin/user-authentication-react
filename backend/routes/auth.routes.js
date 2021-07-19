@@ -6,13 +6,10 @@ const {
   adminSignupAction,
   me,
   adminLogoutAction,
+  refreshTokenAction,
 } = require("../controllers/auth.controllers.js");
 
-const {
-  decodeHeader,
-  requireLogin,
-  refreshTokenAction,
-} = require("../middleware/auth.middleware");
+const { decodeHeader, requireLogin } = require("../middleware/auth.middleware");
 
 const { checkDuplicateUser } = require("../helpers/validation");
 
@@ -23,11 +20,10 @@ router.route("/adminSignup").post(checkDuplicateUser, adminSignupAction);
 router.route("/adminLogin").post(adminLoginAction);
 
 // fetch logged in user info - keeps user logged in on page refresh
-router.route("/me").get(decodeHeader, refreshTokenAction, me);
+router.route("/me").get(decodeHeader, me);
 
-// router
-//   .route("/refreshToken")
-//   .post(decodeHeader, requireLogin, checkTokenExpiry);
+// refresh user's token if the user's access token almost expired
+router.route("/refreshToken").post(refreshTokenAction);
 
 // logout
 router

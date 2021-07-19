@@ -253,83 +253,91 @@ exports.me = async (req, res) => {
   }
 };
 
-// exports.refreshTokenAction = async (req, res) => {
-//   // console.log("----------------------------------------- req");
-//   // console.log(req.token);
-//   // console.log(req.user);
-//   // console.log(req.sessionID);
-//   // console.log("----------------------------------------- res");
-//   // console.log(res.token);
-//   // console.log(res.user);
+/**
+ * if access token has expired, renew the access token and call next();
+ * if not, call next(); directly.
+ *
+ * @param {*} req
+ * @param {*} res
+ * @param {*} next
+ */
+exports.refreshTokenAction = async (req, res) => {
+  // console.log("----------------------------------------- req");
+  // console.log(req.token);
+  // console.log(req.user);
+  // console.log(req.sessionID);
+  // console.log("----------------------------------------- res");
+  // console.log(res.token);
+  // console.log(res.user);
 
-//   const { refresh } = req.body;
-//   // if refresh token missing
-//   if (!refresh)
-//     return Response.sendErrorResponse({
-//       res,
-//       message: "No refresh token provided.",
-//       statusCode: 403,
-//     });
+  const { refresh } = req.body;
+  // if refresh token missing
+  if (!refresh)
+    return Response.sendErrorResponse({
+      res,
+      message: "No refresh token provided.",
+      statusCode: 403,
+    });
 
-//   // if refresh token expires
-//   if (refresh) {
-//     try {
-//       const decoded = Utils.verifyJWT(refresh);
-//       // {
-//       //   exp: 1626825599,
-//       //   data: 6,
-//       //   iat: 1626500973,
-//       //   aud: 'jwt-node',
-//       //   iss: 'jwt-node',
-//       //   sub: 'jwt-node'
-//       // }
-//       const exp = decoded.exp || null;
-//       const now = new Date(Date.now()).getTime() / 1000;
+  // if refresh token expires
+  if (refresh) {
+    try {
+      const decoded = Utils.verifyJWT(refresh);
+      // {
+      //   exp: 1626825599,
+      //   data: 6,
+      //   iat: 1626500973,
+      //   aud: 'jwt-node',
+      //   iss: 'jwt-node',
+      //   sub: 'jwt-node'
+      // }
+      const exp = decoded.exp || null;
+      const now = new Date(Date.now()).getTime() / 1000;
 
-//       // if no exp in decoded or id doesn't match
-//       if (!exp || decoded.data !== res.user.manager_id)
-//         return Response.sendErrorResponse({
-//           res,
-//           message: "Invalid refresh token.",
-//           statusCode: 403,
-//         });
+      // if no exp in decoded or id doesn't match
+      if (!exp || decoded.data !== res.user.manager_id)
+        return Response.sendErrorResponse({
+          res,
+          message: "Invalid refresh token.",
+          statusCode: 403,
+        });
 
-//       // if refresh token expires
-//       if (now > exp)
-//         return Response.sendErrorResponse({
-//           res,
-//           message: "Refresh token expired, please log back in again.",
-//           statusCode: 403,
-//         });
+      // if refresh token expires
+      if (now > exp)
+        return Response.sendErrorResponse({
+          res,
+          message: "Refresh token expired, please log back in again.",
+          statusCode: 403,
+        });
 
-//       // generate new access token using logged in user's info
-//       delete res.user.iat;
-//       delete res.user.exp;
-//       delete res.user.aud;
-//       delete res.user.iss;
-//       delete res.user.sub;
-//       const newToken = Utils.generateJWT(res.user);
+      // generate new access token using logged in user's info
+      delete res.user.iat;
+      delete res.user.exp;
+      delete res.user.aud;
+      delete res.user.iss;
+      delete res.user.sub;
+      const newToken = Utils.generateJWT(res.user);
 
-//       delete res.user.password; // removed password before return
-//       return Response.sendResponse({
-//         res,
-//         message: "Token renewed.",
-//         responseBody: {
-//           user: res.user,
-//           token: newToken,
-//           refresh: refresh,
-//         },
-//         statusCode: 200,
-//       });
-//     } catch (err) {
-//       return Response.sendErrorResponse({
-//         res,
-//         message: err,
-//         statusCode: 500,
-//       });
-//     }
-//   }
-// };
+      delete res.user.password; // removed password before return
+      return Response.sendResponse({
+        res,
+        message: "Token renewed.",
+        responseBody: {
+          user: res.user,
+          token: newToken,
+          refresh: refresh,
+        },
+        statusCode: 200,
+      });
+    } catch (err) {
+      return Response.sendErrorResponse({
+        res,
+        message: err,
+        statusCode: 500,
+      });
+    }
+  }
+};
 
 /**
  * Admin logout action

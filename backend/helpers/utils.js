@@ -32,7 +32,8 @@ const salt = bcrypt.genSaltSync(saltRounds);
  * synchronously signs the given payload into a JSON Web Token string
  * by making use of a private key and an options argument.
  *
- * @param {*} payload - info about the user, no sensitive data
+ * @param {*} payload - info about the user, no sensitive data.
+ *                    - If exp is provided, it will replaced the defailt exp setting with the provided exp for token.
  * @returns a jwt, contructed from header, payload, and signature/encryption
  */
 exports.generateJWT = (payload) => {
@@ -40,7 +41,13 @@ exports.generateJWT = (payload) => {
     issuer: iss,
     subject: sub,
     audience: aud,
+
+    // actual
+    // expiresIn: "15m", // Common practice is to keep it around 15 minutes
+
+    // test
     expiresIn: "40s", // Common practice is to keep it around 15 minutes
+
     algorithm: "RS256",
   };
 
