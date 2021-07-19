@@ -40,20 +40,19 @@ class App extends Component {
       currentUser: {},
       token: "",
       refresh: "",
-      authLoading: "true",
       isLoggedIn: false,
       timeToRefresh: null,
     };
   }
 
-  // FIXME: should get triggerred by the expiry of jwt
   componentDidMount() {
     // Call this function so that it fetch first time right after mounting the component
     this.getInfo();
-    console.log("componentDidMount()");
+
+    console.log(this.state);
 
     // set Interval
-    this.interval = setInterval(() => this.getInfo(), 35 * 1000);
+    this.interval = setInterval(() => this.getInfo(), 35 * 1000); // TODO: change to actual token expiry
   }
 
   componentWillUnmount() {
@@ -68,7 +67,7 @@ class App extends Component {
    * refresh user's access token if the token is about to expire.
    */
   getInfo() {
-    AuthService.getUserInfo()
+    AuthService.getUserInfo(this.state.token)
       .then((response) => {
         console.log(response);
         // this.setState({
@@ -78,6 +77,7 @@ class App extends Component {
         //   isLoggedIn: true,
         // });
         this.setToLoggedIn(response.data);
+        console.log(response.data);
 
         // if response.toRefresh is true, then it's time to refresh our access token.
         if (response.data.toRefresh) {

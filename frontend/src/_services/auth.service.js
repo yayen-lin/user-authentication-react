@@ -10,6 +10,7 @@
 import request from "./request";
 
 // TODO: remove debugging console.log
+// TODO: change user.username, user.firstname, ..., to just user
 
 // send the request to the backend (PORT=8080) (see query.js)
 
@@ -19,41 +20,21 @@ import request from "./request";
  * @param {*} userinfo contains the user info for the user that has just sent login request
  * @returns a request object
  */
-function login(userinfo) {
-  console.log("auth.service - login - userinfo = ", userinfo);
+function login(user) {
+  console.log("auth.service - login - user = ", user);
   return request({
     method: "POST",
     url: "/adminLogin",
     headers: { "Content-Type": "application/json" },
     data: {
-      username: userinfo.username,
-      password: userinfo.password,
+      username: user.username,
+      password: user.password,
     },
-    withCredentials: true,
+    // withCredentials: true,
   }).then((response) => {
     return response;
   });
 }
-
-// function verifyToken(token) {
-//   return request({
-//     method: "GET",
-//     url: `/verifyToken?token=${token}`,
-//     data: {
-//       token: token,
-//     },
-//     withCredential: true,
-//   })
-//     .then((response) => {
-//       setUserSession(response.user, response.token);
-//     })
-//     .catch((error) => {
-//       removeUserSession();
-//       console.log(
-//         `An error occurred while verifying token. error message: ${error}`
-//       );
-//     });
-// }
 
 /**
  * Sign up, a POST request that is sent to the server
@@ -93,6 +74,9 @@ function getUserInfo(token) {
     method: "GET",
     url: "/me",
     withCredentials: true,
+    headers: {
+      Authorization: `Bearer ${token}`,
+    },
   });
 }
 
@@ -134,7 +118,7 @@ function remove(user, token) {
   console.log("auth.service - remove - token = ", token);
 
   return request({
-    method: "delete",
+    method: "DELETE",
     url: "/" + user.username,
     data: {
       username: user.username,

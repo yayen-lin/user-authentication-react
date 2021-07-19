@@ -287,6 +287,8 @@ exports.refreshTokenAction = async (req, res) => {
 
   // console.log("res", res.user.manager_id);
   const refresh = refreshTokensByID[user.manager_id];
+
+  // FIXME: refresh turns undefined sometimes
   console.log("refresh", refresh);
   // if refresh token missing
   if (!refresh)
@@ -340,6 +342,7 @@ exports.refreshTokenAction = async (req, res) => {
       res.cookie(process.env.JWT_ACCESS, newToken, accessCookieOptions);
 
       console.log("Got here - 3");
+      console.log(res.user);
 
       return Response.sendResponse({
         res,

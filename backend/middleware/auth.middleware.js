@@ -69,6 +69,10 @@ exports.decodeHeader = (req, res, next) => {
     req.headers.authorization ||
     req.body.token ||
     req.cookies[process.env.JWT_ACCESS];
+
+  console.log(req);
+
+  // FIXME: token turns undefined sometimes
   console.log(token, "------------------");
 
   // missing token
