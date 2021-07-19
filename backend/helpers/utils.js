@@ -46,7 +46,7 @@ exports.generateJWT = (payload) => {
     // expiresIn: "15m", // Common practice is to keep it around 15 minutes
 
     // test
-    expiresIn: "40s", // Common practice is to keep it around 15 minutes
+    expiresIn: "40s",
 
     algorithm: "RS256",
   };

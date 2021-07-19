@@ -22,7 +22,27 @@ const datetimeConverter = require("../helpers/datetimeConverter");
 const moment = require("moment");
 const session = require("express-session");
 
+/* -------------------------------------- cookie setting -------------------------------------- */
 let refreshTokensByID = {}; // { manager_id: refreshToken }
+// cookie setting w/ access token
+const accessCookieOptions = {
+  // cookie expires after 90 mins from the time it is set.
+  expires: new Date(
+    Date.now() + process.env.JWT_COOKIE_ACCESS_EXPIRES * 60 * 1000
+  ),
+  httpOnly: true, // for security reason it's recommended to set httpOnly to true
+  sameSite: true,
+};
+
+// cookie setting w/ refresh token
+const refreshCookieOptions = {
+  // cookie expires after 3 days from the time it is set.
+  expires: new Date(
+    Date.now() + process.env.JWT_COOKIE_REFRESH_EXPIRES * 60 * 60 * 1000
+  ),
+  httpOnly: true, // for security reason it's recommended to set httpOnly to true
+  sameSite: true,
+};
 
 /**
  * Admin sign up action
@@ -173,26 +193,6 @@ exports.adminLoginAction = (req, res) => {
         data: dbResponse.manager_id,
       });
 
-      // cookie setting w/ access token
-      const accessCookieOptions = {
-        // cookie expires after 90 mins from the time it is set.
-        expires: new Date(
-          Date.now() + process.env.JWT_COOKIE_ACCESS_EXPIRES * 60 * 1000
-        ),
-        httpOnly: true, // for security reason it's recommended to set httpOnly to true
-        sameSite: true,
-      };
-
-      // cookie setting w/ refresh token
-      const refreshCookieOptions = {
-        // cookie expires after 3 days from the time it is set.
-        expires: new Date(
-          Date.now() + process.env.JWT_COOKIE_REFRESH_EXPIRES * 60 * 60 * 1000
-        ),
-        httpOnly: true, // for security reason it's recommended to set httpOnly to true
-        sameSite: true,
-      };
-
       // add cookies to the response
       res.cookie(process.env.JWT_ACCESS, token, accessCookieOptions);
       res.cookie(process.env.JWT_REFRESH, refreshToken, refreshCookieOptions);
@@ -245,7 +245,6 @@ exports.me = async (req, res) => {
   delete res.user.sub;
   delete res.user.password;
   try {
-    // FIXME: be consistent with what adminLogin returns
     return Response.sendResponse({
       res,
       message: "User details successfully fetched",
@@ -284,8 +283,10 @@ exports.refreshTokenAction = async (req, res) => {
   // console.log(res.token);
   // console.log(res.user);
 
+  const { user } = req.body;
+
   // console.log("res", res.user.manager_id);
-  const refresh = refreshTokensByID[req.body.user.manager_id];
+  const refresh = refreshTokensByID[user.manager_id];
   console.log("refresh", refresh);
   // if refresh token missing
   if (!refresh)
@@ -310,11 +311,8 @@ exports.refreshTokenAction = async (req, res) => {
       const exp = decoded.exp || null;
       const now = new Date(Date.now()).getTime() / 1000;
 
-      console.log("exp", exp);
-      console.log("now", now);
-
       // if no exp in decoded or id doesn't match
-      if (!exp || decoded.data !== req.body.user.manager_id)
+      if (!exp || decoded.data !== user.manager_id)
         return Response.sendErrorResponse({
           res,
           message: "Invalid refresh token.",
@@ -334,7 +332,12 @@ exports.refreshTokenAction = async (req, res) => {
       console.log("Got here - 2");
 
       // generate new access token using logged in user's info
-      const newToken = Utils.generateJWT(req.body.user);
+      const newToken = Utils.generateJWT(user);
+
+      // clear the old cookie
+      res.clearCookie(process.env.JWT_ACCESS);
+      // add the new cookie to response
+      res.cookie(process.env.JWT_ACCESS, newToken, accessCookieOptions);
 
       console.log("Got here - 3");
 

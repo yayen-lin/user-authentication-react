@@ -30,6 +30,8 @@ import Dashboard from "./_components/admin/Dashboard";
 // guest views
 import Home from "./_components/guestView/Home";
 import Navigation from "./_components/guestView/Navigation";
+import cookieParser from "cookie-parser";
+import { Cookie } from "express-session";
 
 class App extends Component {
   constructor(props) {
@@ -40,11 +42,20 @@ class App extends Component {
       refresh: "",
       authLoading: "true",
       isLoggedIn: false,
+      timeToRefresh: null,
     };
   }
 
+  // FIXME: should get triggerred by the expiry of jwt
   componentDidMount() {
     this.getInfo();
+    this.interval = setInterval(() => {
+      this.setState({ timeToRefresh: Date.now() });
+    }, 35 * 60 * 1000);
+  }
+
+  componentWillUnmount() {
+    clearInterval(this.interval);
   }
 
   /**
@@ -82,6 +93,7 @@ class App extends Component {
         //   console.log(err);
         //   AuthService.refreshToken(this.state.currentUser, this.state.refresh);
         // } else {
+        // remove all cookies if token expired
         this.setState({
           currentUser: "",
           token: "",

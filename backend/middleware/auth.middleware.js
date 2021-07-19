@@ -115,14 +115,43 @@ exports.decodeHeader = (req, res, next) => {
     return next();
   } catch (err) {
     // if err is TokenExpiredError
-    if (err.name === "TokenExpiredError")
+    if (err.name === "TokenExpiredError") {
+      // --------------------- remove session and cookies ---------------------
+      // replace cookie with logout cookie
+      res.cookie(process.env.JWT_ACCESS, "token expired", {
+        // cookie expires after 2 sec from the time it is set.
+        expires: new Date(Date.now() + 2 * 1000),
+        httpOnly: true,
+        sameSite: true,
+      });
+
+      // replace refresh cookie with logout cookie
+      res.cookie(process.env.JWT_REFRESH, "token expired", {
+        // cookie expires after 2 sec from the time it is set.
+        expires: new Date(Date.now() + 2 * 1000),
+        httpOnly: true,
+        sameSite: true,
+      });
+
+      // destroy session
+      req.session.destroy((err) => {
+        if (err)
+          return Response.sendErrorResponse({
+            res,
+            message: "Something happened while destroying the session.",
+            statusCode: 400,
+          });
+      });
+
       // FIXME:
       // receive the TokenExpiredError and send a new request from the frontend
+
       return Response.sendErrorResponse({
         res,
         message: "TokenExpiredError: your token has expired",
         statusCode: 403,
       });
+    }
 
     // something else went wrong
     return Response.sendErrorResponse({
