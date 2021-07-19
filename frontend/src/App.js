@@ -48,42 +48,54 @@ class App extends Component {
   }
 
   /**
-   * get the user info and set isLoggedIn to true if a cookie with token is found in the cookies storage;
+   * Get the user info and set isLoggedIn to true if a cookie with token is found in the cookies storage;
    * otherwise set isLoggedIn to false.
+   *
+   * refresh user's access token if the token is about to expire.
    */
   getInfo() {
     AuthService.getUserInfo()
       .then((response) => {
         console.log(response);
-        this.setState({
-          currentUser: response.data,
-          token: response.token,
-          refresh: response.refresh,
-          isLoggedIn: true,
-        });
+        // this.setState({
+        //   currentUser: response.data,
+        //   token: response.data.token,
+        //   refresh: response.data.refresh,
+        //   isLoggedIn: true,
+        // });
+        this.setToLoggedIn(response.data);
+
+        // if response.toRefresh is true, then it's time to refresh our access token.
+        if (response.data.toRefresh) {
+          console.log("Token about to get refreshed!");
+          AuthService.refreshToken(this.state.currentUser).then((response) => {
+            console.log(response);
+            console.log("Token has refreshed!");
+          });
+        }
       })
       .catch((error) => {
         console.log(error);
-        const err = error.data || null;
-        if (err !== null && err.message.startsWith("TokenExpiredError")) {
-          // TODO: call refresh token
-          console.log(err);
-          AuthService.refreshToken(this.state.currentUser, this.state.refresh);
-        } else {
-          this.setState({
-            currentUser: "",
-            token: "",
-            refresh: "",
-            isLoggedIn: false,
-          });
-        }
+        // const err = error.data || null;
+        // if (err !== null && err.message.startsWith("TokenExpiredError")) {
+        //   // TODO: call refresh token
+        //   console.log(err);
+        //   AuthService.refreshToken(this.state.currentUser, this.state.refresh);
+        // } else {
+        this.setState({
+          currentUser: "",
+          token: "",
+          refresh: "",
+          isLoggedIn: false,
+        });
+        // }
       });
   }
 
   /**
    * Set logged in user info to state
    *
-   * @param {*} resData: response from the server
+   * @param {*} response: 'response.data' from the server
    */
   setToLoggedIn(response) {
     if (response)

@@ -91,25 +91,32 @@ exports.decodeHeader = (req, res, next) => {
       });
   }
 
-  console.log("got here 1");
+  /*
+   * Refresh token if necessary;
+   * otherwise throw error if token expired, or invalid signatire
+   */
   try {
     // check if access token is valid + not expired
     const decoded = Utils.verifyJWT(token);
 
     // if token is valid, return next();
     if (decoded) res.user = decoded;
+    console.log(res.user);
+
+    // tokenExp: keep tracks of when the token expires
+    res.tokenExp = decoded.exp - new Date(Date.now()).getTime() / 1000;
+    console.log("res.tokenExp", res.tokenExp);
+
+    // if token expiry less than xx seconds, set toRefresh to true in the response.
+    if (res.tokenExp < 30) res.toRefresh = true;
+    else res.toRefresh = false;
+
     res.token = token;
     return next();
   } catch (err) {
     // if err is TokenExpiredError
-    console.log(err);
-    // access token has expired
     if (err.name === "TokenExpiredError")
-      // TODO:
-      // FIXME: - 1
-      // instead of throwing an error,
-      // refresh the access token here using refresh token and return next()
-      // FIXME: - 2
+      // FIXME:
       // receive the TokenExpiredError and send a new request from the frontend
       return Response.sendErrorResponse({
         res,
@@ -146,107 +153,107 @@ exports.requireLogin = async (req, res, next) => {
   }
 };
 
-/**
- * if access token has expired, renew the access token and call next();
- * if not, call next(); directly.
- *
- * @param {*} req
- * @param {*} res
- * @param {*} next
- */
-exports.refreshTokenAction = async (req, res, next) => {
-  // console.log("----------------------------------------- req");
-  // console.log(req.token);
-  // console.log(req.user);
-  // console.log(req.sessionID);
-  // console.log("----------------------------------------- res");
-  // console.log(res.token);
-  // console.log(res.user);
-  console.log("refresh token action~");
+// /**
+//  * if access token has expired, renew the access token and call next();
+//  * if not, call next(); directly.
+//  *
+//  * @param {*} req
+//  * @param {*} res
+//  * @param {*} next
+//  */
+// exports.refreshTokenAction = async (req, res, next) => {
+//   // console.log("----------------------------------------- req");
+//   // console.log(req.token);
+//   // console.log(req.user);
+//   // console.log(req.sessionID);
+//   // console.log("----------------------------------------- res");
+//   // console.log(res.token);
+//   // console.log(res.user);
+//   console.log("refresh token action~");
 
-  const { token, refresh } = req.body;
-  const now = new Date(Date.now()).getTime() / 1000;
+//   const { token, refresh } = req.body;
+//   const now = new Date(Date.now()).getTime() / 1000;
 
-  if (token) {
-    const decoded = Utils.verifyJWT(token);
-    const exp = decoded.exp;
-    // if current access token has not expired
-    if (exp > now) next();
-    // current access token has expired
-    else {
-      // if refresh token missing
-      if (!refresh)
-        return Response.sendErrorResponse({
-          res,
-          message: "No refresh token provided.",
-          statusCode: 403,
-        });
+//   if (token) {
+//     const decoded = Utils.verifyJWT(token);
+//     const exp = decoded.exp;
+//     // if current access token has not expired
+//     if (exp > now) next();
+//     // current access token has expired
+//     else {
+//       // if refresh token missing
+//       if (!refresh)
+//         return Response.sendErrorResponse({
+//           res,
+//           message: "No refresh token provided.",
+//           statusCode: 403,
+//         });
 
-      // if refresh token expires
-      if (refresh) {
-        try {
-          const decoded = Utils.verifyJWT(refresh);
-          // {
-          //   exp: 1626825599,
-          //   data: 6,
-          //   iat: 1626500973,
-          //   aud: 'jwt-node',
-          //   iss: 'jwt-node',
-          //   sub: 'jwt-node'
-          // }
-          const exp = decoded.exp || null;
+//       // if refresh token expires
+//       if (refresh) {
+//         try {
+//           const decoded = Utils.verifyJWT(refresh);
+//           // {
+//           //   exp: 1626825599,
+//           //   data: 6,
+//           //   iat: 1626500973,
+//           //   aud: 'jwt-node',
+//           //   iss: 'jwt-node',
+//           //   sub: 'jwt-node'
+//           // }
+//           const exp = decoded.exp || null;
 
-          // if no exp in decoded or id doesn't match
-          if (!exp || decoded.data !== res.user.manager_id)
-            return Response.sendErrorResponse({
-              res,
-              message: "Invalid refresh token.",
-              statusCode: 403,
-            });
+//           // if no exp in decoded or id doesn't match
+//           if (!exp || decoded.data !== res.user.manager_id)
+//             return Response.sendErrorResponse({
+//               res,
+//               message: "Invalid refresh token.",
+//               statusCode: 403,
+//             });
 
-          // if refresh token expires
-          if (now > exp)
-            return Response.sendErrorResponse({
-              res,
-              message: "Refresh token expired, please log back in again.",
-              statusCode: 403,
-            });
+//           // if refresh token expires
+//           if (now > exp)
+//             return Response.sendErrorResponse({
+//               res,
+//               message: "Refresh token expired, please log back in again.",
+//               statusCode: 403,
+//             });
 
-          // generate new access token using logged in user's info
-          delete res.user.iat;
-          delete res.user.exp;
-          delete res.user.aud;
-          delete res.user.iss;
-          delete res.user.sub;
-          const newToken = Utils.generateJWT(res.user);
+//           // generate new access token using logged in user's info
+//           delete res.user.iat;
+//           delete res.user.exp;
+//           delete res.user.aud;
+//           delete res.user.iss;
+//           delete res.user.sub;
+//           const newToken = Utils.generateJWT(res.user);
 
-          console.log("Token renewed.");
-          console.log(token, "------------------");
-          res.token = newToken;
-          next();
+//           console.log("Token renewed.");
+//           console.log(token, "------------------");
+//           res.token = newToken;
+//           next();
 
-          // delete res.user.password; // removed password before return
-          // return Response.sendResponse({
-          //   res,
-          //   message: "Token renewed.",
-          //   responseBody: {
-          //     user: res.user,
-          //     token: newToken,
-          //     refresh: refresh,
-          //   },
-          //   statusCode: 200,
-          // });
-        } catch (err) {
-          return Response.sendErrorResponse({
-            res,
-            message: err,
-            statusCode: 500,
-          });
-        }
-      }
-    }
-  }
-};
+//           // delete res.user.password; // removed password before return
+//           // return Response.sendResponse({
+//           //   res,
+//           //   message: "Token renewed.",
+//           //   responseBody: {
+//           //     user: res.user,
+//           //     token: newToken,
+//           //     refresh: refresh,
+//           //   },
+//           //   statusCode: 200,
+//           // });
+//         } catch (err) {
+//           return Response.sendErrorResponse({
+//             res,
+//             message: err,
+//             statusCode: 500,
+//           });
+//         }
+//       }
+//     }
+//   }
+// };
 
 exports.verifyUsername = async (req, res, next) => {};
 

@@ -96,15 +96,15 @@ function getUserInfo(token) {
   });
 }
 
-function refreshToken(user, refresh) {
+function refreshToken(user) {
   console.log("refresh token - auth service");
+  console.log("user", user);
   return request({
     method: "POST",
     url: "/refreshToken",
     withCredentials: true,
     data: {
-      manager_id: user.manager_id,
-      refresh: refresh,
+      user: user,
     },
   });
 }

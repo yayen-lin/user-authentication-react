@@ -22,6 +22,8 @@ const datetimeConverter = require("../helpers/datetimeConverter");
 const moment = require("moment");
 const session = require("express-session");
 
+let refreshTokensByID = {}; // { manager_id: refreshToken }
+
 /**
  * Admin sign up action
  *
@@ -195,7 +197,11 @@ exports.adminLoginAction = (req, res) => {
       res.cookie(process.env.JWT_ACCESS, token, accessCookieOptions);
       res.cookie(process.env.JWT_REFRESH, refreshToken, refreshCookieOptions);
 
-      // TODO: create session for logged in user.
+      // add refreshToken to our refreshToken obj
+      refreshTokensByID[dbResponse.manager_id] = refreshToken;
+      console.log("added to refershTokensByID: ", refreshTokensByID);
+
+      // FIXME: create session for logged in user.
       let sess = req.session;
       sess.user_id = dbResponse.manager_id;
       console.log("session", sess);
@@ -229,18 +235,26 @@ exports.adminLoginAction = (req, res) => {
  * @returns current logged in user info
  */
 exports.me = async (req, res) => {
+  const { user, token, tokenExp, toRefresh } = res;
+
+  console.log(res.user);
+  delete res.user.iat;
+  delete res.user.exp;
+  delete res.user.aud;
+  delete res.user.iss;
+  delete res.user.sub;
+  delete res.user.password;
   try {
+    // FIXME: be consistent with what adminLogin returns
     return Response.sendResponse({
       res,
       message: "User details successfully fetched",
       responseBody: {
-        username: res.user.username,
-        firstname: res.user.firstname || null,
-        lastname: res.user.lastname || null,
-        manager_id: res.user.manager_id,
-        privilege: res.user.privilege,
-        active: res.user.active,
-        token: res.token,
+        user: user,
+        token: token,
+        refresh: refreshTokensByID[user.manager_id],
+        tokenExp: tokenExp,
+        toRefresh: toRefresh,
       },
     });
   } catch (error) {
@@ -270,7 +284,9 @@ exports.refreshTokenAction = async (req, res) => {
   // console.log(res.token);
   // console.log(res.user);
 
-  const { refresh } = req.body;
+  // console.log("res", res.user.manager_id);
+  const refresh = refreshTokensByID[req.body.user.manager_id];
+  console.log("refresh", refresh);
   // if refresh token missing
   if (!refresh)
     return Response.sendErrorResponse({
@@ -294,13 +310,18 @@ exports.refreshTokenAction = async (req, res) => {
       const exp = decoded.exp || null;
       const now = new Date(Date.now()).getTime() / 1000;
 
+      console.log("exp", exp);
+      console.log("now", now);
+
       // if no exp in decoded or id doesn't match
-      if (!exp || decoded.data !== res.user.manager_id)
+      if (!exp || decoded.data !== req.body.user.manager_id)
         return Response.sendErrorResponse({
           res,
           message: "Invalid refresh token.",
           statusCode: 403,
         });
+
+      console.log("Got here - 1");
 
       // if refresh token expires
       if (now > exp)
@@ -310,15 +331,13 @@ exports.refreshTokenAction = async (req, res) => {
           statusCode: 403,
         });
 
-      // generate new access token using logged in user's info
-      delete res.user.iat;
-      delete res.user.exp;
-      delete res.user.aud;
-      delete res.user.iss;
-      delete res.user.sub;
-      const newToken = Utils.generateJWT(res.user);
+      console.log("Got here - 2");
 
-      delete res.user.password; // removed password before return
+      // generate new access token using logged in user's info
+      const newToken = Utils.generateJWT(req.body.user);
+
+      console.log("Got here - 3");
+
       return Response.sendResponse({
         res,
         message: "Token renewed.",
@@ -330,6 +349,7 @@ exports.refreshTokenAction = async (req, res) => {
         statusCode: 200,
       });
     } catch (err) {
+      console.log(err);
       return Response.sendErrorResponse({
         res,
         message: err,
