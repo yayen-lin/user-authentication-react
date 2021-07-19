@@ -48,13 +48,16 @@ class App extends Component {
 
   // FIXME: should get triggerred by the expiry of jwt
   componentDidMount() {
+    // Call this function so that it fetch first time right after mounting the component
     this.getInfo();
-    this.interval = setInterval(() => {
-      this.setState({ timeToRefresh: Date.now() });
-    }, 35 * 60 * 1000);
+    console.log("componentDidMount()");
+
+    // set Interval
+    this.interval = setInterval(() => this.getInfo(), 35 * 1000);
   }
 
   componentWillUnmount() {
+    // Clear the interval right before component unmount
     clearInterval(this.interval);
   }
 
