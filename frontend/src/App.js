@@ -52,7 +52,7 @@ class App extends Component {
     console.log(this.state);
 
     // set Interval
-    this.interval = setInterval(() => this.getInfo(), 35 * 1000); // TODO: change to actual token expiry
+    this.interval = setInterval(() => this.getInfo(), 25 * 1000); // TODO: change to actual token expiry
   }
 
   componentWillUnmount() {

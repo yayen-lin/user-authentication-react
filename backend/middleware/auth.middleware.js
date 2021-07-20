@@ -72,10 +72,6 @@ exports.decodeHeader = (req, res, next) => {
     null;
 
   // FIXME: token turns undefined sometimes
-  console.log("----------------------- res -----------------------");
-  console.log("req.headers", req.headers, "------------------");
-  console.log("req.cookies", req.cookies, "------------------");
-  console.log(token, "------------------");
 
   if (token && token.startsWith("Bearer "))
     token = token.slice(7, token.length); // remove Bearer from string

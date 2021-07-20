@@ -343,13 +343,13 @@ exports.refreshTokenAction = async (req, res) => {
       res.cookie(process.env.JWT_ACCESS, newToken, accessCookieOptions);
 
       console.log("Got here - 3");
-      console.log(res.user); // FIXME: undefined?
+      console.log(user); // FIXME: undefined?
 
       return Response.sendResponse({
         res,
         message: "Token renewed.",
         responseBody: {
-          user: res.user,
+          user: user,
           token: newToken,
           refresh: refresh,
         },
