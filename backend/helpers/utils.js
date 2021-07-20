@@ -21,7 +21,7 @@ const verifyOptions = {
   issuer: iss,
   subject: sub,
   audience: aud,
-  expiresIn: "15m", // Common practice is to keep it around 15 minutes
+  expiresIn: process.env.JWT_EXPIRES_IN, // Common practice is to keep it around 15 minutes
   algorithm: ["RS256"],
 };
 
@@ -43,10 +43,10 @@ exports.generateJWT = (payload) => {
     audience: aud,
 
     // actual
-    // expiresIn: "15m", // Common practice is to keep it around 15 minutes
+    expiresIn: process.env.JWT_EXPIRES_IN, // Common practice is to keep it around 15 minutes
 
     // test
-    expiresIn: "40s",
+    // expiresIn: "40s",
 
     algorithm: "RS256",
   };

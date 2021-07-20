@@ -42,6 +42,9 @@ class App extends Component {
       refresh: "",
       isLoggedIn: false,
       timeToRefresh: null,
+
+      // to renew access token (in seconds)
+      browserRefreshPeriod: 300,
     };
   }
 
@@ -52,7 +55,10 @@ class App extends Component {
     console.log(this.state);
 
     // set Interval
-    this.interval = setInterval(() => this.getInfo(), 25 * 1000); // TODO: change to actual token expiry
+    this.interval = setInterval(
+      () => this.getInfo(),
+      this.state.browserRefreshPeriod * 1000
+    );
   }
 
   componentWillUnmount() {

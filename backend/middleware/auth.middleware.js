@@ -102,7 +102,7 @@ exports.decodeHeader = (req, res, next) => {
     console.log("res.tokenExp", res.tokenExp);
 
     // if token expiry less than xx seconds, set toRefresh to true in the response.
-    if (res.tokenExp < 30) res.toRefresh = true;
+    if (res.tokenExp < process.env.JWT_REFRESH_PERIOD) res.toRefresh = true;
     else res.toRefresh = false;
 
     res.token = token;
