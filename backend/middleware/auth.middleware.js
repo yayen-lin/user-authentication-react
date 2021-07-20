@@ -68,31 +68,25 @@ exports.decodeHeader = (req, res, next) => {
     req.headers["x-access-token"] ||
     req.headers.authorization ||
     req.body.token ||
-    req.cookies[process.env.JWT_ACCESS];
-
-  console.log(req);
+    req.cookies[process.env.JWT_ACCESS] ||
+    null;
 
   // FIXME: token turns undefined sometimes
+  console.log("----------------------- res -----------------------");
+  console.log("req.headers", req.headers, "------------------");
+  console.log("req.cookies", req.cookies, "------------------");
   console.log(token, "------------------");
 
+  if (token && token.startsWith("Bearer "))
+    token = token.slice(7, token.length); // remove Bearer from string
+
   // missing token
-  if (!token) {
+  if (!token || token === "") {
     return Response.sendErrorResponse({
       res,
       message: "No token provided",
       statusCode: 401,
     });
-  }
-
-  // after removing 'Bearer ' and found no token
-  if (token.startsWith("Bearer ")) {
-    token = token.slice(7, token.length); // remove Bearer from string
-    if (!token || token === "")
-      Response.sendErrorResponse({
-        res,
-        message: "No token provided",
-        statusCode: 401,
-      });
   }
 
   /*
@@ -156,7 +150,7 @@ exports.decodeHeader = (req, res, next) => {
         statusCode: 403,
       });
     }
-
+    console.log(err);
     // something else went wrong
     return Response.sendErrorResponse({
       res,

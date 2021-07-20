@@ -69,14 +69,11 @@ function logout(token) {
   });
 }
 
-function getUserInfo(token) {
+function getUserInfo() {
   return request({
     method: "GET",
     url: "/me",
     withCredentials: true,
-    headers: {
-      Authorization: `Bearer ${token}`,
-    },
   });
 }
 

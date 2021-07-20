@@ -3,6 +3,7 @@ node_modules/
 
 # env var
 .env
+.env.local
 
 # misc
 .DS_Store

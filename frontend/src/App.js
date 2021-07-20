@@ -67,7 +67,9 @@ class App extends Component {
    * refresh user's access token if the token is about to expire.
    */
   getInfo() {
-    AuthService.getUserInfo(this.state.token)
+    // console.log("GET INFO, this state", this.state);
+    // console.log("GET INFO, token", this.state.token); // FIXME: this.state.token is undefined ...
+    AuthService.getUserInfo()
       .then((response) => {
         console.log(response);
         // this.setState({
@@ -105,6 +107,8 @@ class App extends Component {
         });
         // }
       });
+    console.log("GET INFO, this state", this.state);
+    console.log("GET INFO, token", this.state.token);
   }
 
   /**
@@ -120,6 +124,7 @@ class App extends Component {
         refresh: response.refresh,
         isLoggedIn: true,
       });
+    console.log("SET TO LOGIN, ", this.state);
   }
 
   /**

@@ -95,6 +95,7 @@ exports.adminSignupAction = (req, res) => {
     .then(async (rows) => {
       console.log("auth.controllers - signup - rows = ", rows);
 
+      // TODO: check and remove password if exists in response
       // dbResponse = rows[0];
       // delete dbResponse.password;
 
@@ -342,7 +343,7 @@ exports.refreshTokenAction = async (req, res) => {
       res.cookie(process.env.JWT_ACCESS, newToken, accessCookieOptions);
 
       console.log("Got here - 3");
-      console.log(res.user);
+      console.log(res.user); // FIXME: undefined?
 
       return Response.sendResponse({
         res,

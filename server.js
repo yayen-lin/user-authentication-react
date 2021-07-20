@@ -83,7 +83,7 @@ const sessOptions = {
 const app = express();
 app.use(express.json());
 // app.use(cors(corsOptions));
-// app.use(cors());
+app.use(cors({ origin: true, credentials: true }));
 app.use((req, res, next) => {
   const allowedOrigins = [
     "https://www.carmax168.com",
@@ -108,8 +108,8 @@ app.use(bodyParser.urlencoded({ extended: true }));
 app.use(session(sessOptions));
 
 // bad practice to use global in JS
-global.jwt = jwt;
-global.bcrypt = bcrypt;
+// global.jwt = jwt;
+// global.bcrypt = bcrypt;
 
 // ----------------------- import routes -----------------------
 const authRoutes = require("./backend/routes/auth.routes");

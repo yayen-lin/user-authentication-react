@@ -9,6 +9,8 @@
 
 import axios from "axios";
 
+axios.defaults.withCredentials = true;
+
 // let baseURL = "http://localhost:8080";
 let baseURL = "http://127.0.0.1:8080";
 if (process.env.NODE_ENV === "production") {
