@@ -8,16 +8,9 @@
  */
 
 import request from "./request";
-import { BehaviorSubject } from "rxjs";
-
-// don't worry about unsubscribing from the observable here because it's the root component
-//  of the application, so the only time the component will be destroyed is when the
-// application is closed which would destroy any subscriptions as well.
-const currentUserSubject = new BehaviorSubject(
-  localStorage.getItem("currentUser")
-);
 
 // TODO: remove debugging console.log
+// TODO: change user.username, user.firstname, ..., to just user
 
 // send the request to the backend (PORT=8080) (see query.js)
 
@@ -27,23 +20,19 @@ const currentUserSubject = new BehaviorSubject(
  * @param {*} userinfo contains the user info for the user that has just sent login request
  * @returns a request object
  */
-function login(userinfo) {
-  console.log("auth.service - login - userinfo = ", userinfo);
+function login(user) {
+  console.log("auth.service - login - user = ", user);
   return request({
     method: "POST",
-    url: "/login",
+    url: "/adminLogin",
     headers: { "Content-Type": "application/json" },
     data: {
-      username: userinfo.username,
-      password: userinfo.password,
+      username: user.username,
+      password: user.password,
     },
-    withCredentials: true,
-  }).then((resData) => {
-    // store user details and jwt token in local storage to keep user logged in between page refreshes
-    localStorage.setItem("currentUser", JSON.stringify(resData));
-    currentUserSubject.next(resData); // TODO: this stores username and token in the Subject
-
-    return resData;
+    // withCredentials: true,
+  }).then((response) => {
+    return response;
   });
 }
 
@@ -56,14 +45,48 @@ function login(userinfo) {
 function signup(user) {
   console.log("auth.service - signup - user = ", user);
   return request({
-    url: "/signup",
     method: "POST",
+    url: "/adminSignup",
     data: {
       username: user.username,
+      firstname: user.firstname,
+      lastname: user.lastname,
       password: user.password,
-      privilege: user.privilege,
     },
+    // withCredentials: true,
+  });
+}
+
+function logout(token) {
+  console.log("auth.service - logout");
+  return request({
+    method: "POST",
+    url: "/adminLogout",
     withCredentials: true,
+    // headers: {
+    //   Authorization: `Bearer ${token}`,
+    // },
+  });
+}
+
+function getUserInfo() {
+  return request({
+    method: "GET",
+    url: "/me",
+    withCredentials: true,
+  });
+}
+
+function refreshToken(user) {
+  console.log("refresh token - auth service");
+  console.log("user", user);
+  return request({
+    method: "POST",
+    url: "/refreshToken",
+    withCredentials: true,
+    data: {
+      user: user,
+    },
   });
 }
 
@@ -72,8 +95,8 @@ function editProfile(user, token) {
   console.log("auth.service - editProfile - token = ", token);
 
   return request({
-    url: "/" + user.username,
     method: "PUT",
+    url: "/" + user.username,
     data: {
       username: user.username,
       password: user.password,
@@ -87,28 +110,13 @@ function editProfile(user, token) {
   });
 }
 
-function logout() {
-  console.log("auth.service - logout");
-  // remove user from local storage to log user out
-  console.log("Removing currentUser in local storage.");
-  localStorage.removeItem("currentUser");
-  currentUserSubject.next(null);
-  return request({
-    url: "/logout",
-    method: "POST",
-    withCredentials: true,
-  });
-}
-
-// TEST: remove
-function isAuth(user, token) {
-  // TODO: add is_auth user
-  console.log("auth.service - isAuth - user = ", user);
-  console.log("auth.service - isAuth - token = ", token);
+function remove(user, token) {
+  console.log("auth.service - remove - user = ", user);
+  console.log("auth.service - remove - token = ", token);
 
   return request({
-    url: "/isAuth",
-    method: "GET",
+    method: "DELETE",
+    url: "/" + user.username,
     data: {
       username: user.username,
       password: user.password,
@@ -119,27 +127,18 @@ function isAuth(user, token) {
       Authorization: `Bearer ${token}`,
     },
     withCredentials: true,
-  });
-}
-
-function isLoggedIn(username) {
-  return request({
-    url: "/isLoggedIn",
-    method: "GET",
-    data: { username: username },
   });
 }
 
 const AuthService = {
-  signup,
   login,
-  editProfile,
+  signup,
   logout,
-  isAuth, // TEST: remove
-  isLoggedIn,
-  currentUser: currentUserSubject.asObservable(),
-  get currentUserValue() {
-    return currentUserSubject.value;
-  },
+  getUserInfo,
+  refreshToken,
+
+  // not implemented yet
+  editProfile,
+  remove,
 };
 export default AuthService;

@@ -9,433 +9,411 @@
 // TODO: remove console log debugging output
 // TODO: return json auth needs to be re-determined
 
-// const session = require("express-session");
+// our db for auth action
 const authDB = require("../models/auth.models.js");
-// const userDB = require("../models/user.models.js");
 
-exports.adminLoginAction = (req, res) => {
-  if (req.cookies[0]) {
-    console.log("req.cookies is : ", req.cookies);
-    console.log("USER HAS LOGGED IN!");
-  } else {
-    console.log("req.cookies is not set!");
-    console.log("USER HAS NOT LOGGED IN!");
+// helper functions
+const Utils = require("../helpers/utils");
+const Response = require("../helpers/response");
+const Validation = require("../helpers/validation");
+const datetimeConverter = require("../helpers/datetimeConverter");
+
+// tools
+const moment = require("moment");
+const session = require("express-session");
+
+/* -------------------------------------- cookie setting -------------------------------------- */
+let refreshTokensByID = {}; // { manager_id: refreshToken }
+// cookie setting w/ access token
+const accessCookieOptions = {
+  // cookie expires after 90 mins from the time it is set.
+  expires: new Date(
+    Date.now() + process.env.JWT_COOKIE_ACCESS_EXPIRES * 60 * 1000
+  ),
+  httpOnly: true, // for security reason it's recommended to set httpOnly to true
+  sameSite: true,
+};
+
+// cookie setting w/ refresh token
+const refreshCookieOptions = {
+  // cookie expires after 3 days from the time it is set.
+  expires: new Date(
+    Date.now() + process.env.JWT_COOKIE_REFRESH_EXPIRES * 60 * 60 * 1000
+  ),
+  httpOnly: true, // for security reason it's recommended to set httpOnly to true
+  sameSite: true,
+};
+
+/**
+ * Admin sign up action
+ *
+ * @param {*} req
+ * @param {*} res
+ * @returns
+ */
+exports.adminSignupAction = (req, res) => {
+  const { username, firstname, lastname, password } = req.body;
+
+  const privilegeDefault = "3";
+  const activeDefault = "1";
+  const createdOn = datetimeConverter.toMySqlDateTime(moment(new Date()));
+
+  // check username
+  if (!Validation.validateUsername(username)) {
+    return Response.sendErrorResponse({
+      res,
+      message: "Please provide a valid username",
+      statusCode: 400,
+    });
   }
 
-  const user = {
-    username: req.body.username,
-    password: req.body.password,
-  };
+  // check password
+  if (!Validation.validatePassword(password)) {
+    return Response.sendErrorResponse({
+      res,
+      message: "Please provide a valid password",
+      statusCode: 400,
+    });
+  }
 
-  if (
-    !user.username ||
-    !user.password ||
-    user.username === "" ||
-    user.password === ""
-  ) {
-    return res.status(200).json({
-      message: "Please provide a username and password.",
+  // hash + salt password
+  const hash = Utils.hashPassword(password);
+
+  // new user info
+  const vals = [
+    username,
+    firstname || null,
+    lastname || null,
+    hash,
+    privilegeDefault,
+    activeDefault,
+    createdOn,
+  ];
+
+  authDB
+    .adminSignup(req, res, vals)
+    .then(async (rows) => {
+      console.log("auth.controllers - signup - rows = ", rows);
+
+      // TODO: check and remove password if exists in response
+      // dbResponse = rows[0];
+      // delete dbResponse.password;
+
+      return Response.sendResponse({
+        res,
+        responseBody: { user: rows /*dbResponse*/ },
+        statusCode: 201,
+        message: "User successfully created",
+      });
+    })
+    .catch((err) => {
+      console.log(err, "error");
+      return Response.sendErrorResponse({
+        res,
+        message: error,
+        statusCode: 500,
+      });
+    });
+};
+
+/**
+ * Admin login action
+ *
+ * @param {*} req
+ * @param {*} res
+ * @returns
+ */
+exports.adminLoginAction = (req, res) => {
+  const { username, password } = req.body;
+
+  if (Validation.isEmpty(username) || !Validation.validateUsername(username)) {
+    return Response.sendErrorResponse({
+      res,
+      message: "Username is missing.",
+      statusCode: 400,
+    });
+  }
+
+  if (Validation.isEmpty(password) || !Validation.validatePassword(password)) {
+    return Response.sendErrorResponse({
+      res,
+      message: "Password is missing.",
+      statusCode: 400,
     });
   }
 
   authDB
-    .adminLogin(req, res, user)
+    .adminLogin(req, res, username)
     .then(async (results) => {
       console.log("auth.controllers - login - results = ", results);
-      // if result is not returned or password is incorrect after `bcrypt.compare`
-      if (
-        !results[0] ||
-        !(await bcrypt.compare(req.body.password, results[0].password))
-      ) {
-        // wrong password
-        return res.status(200).json({
-          auth: false,
-          message: "Username or password is incorrect.",
-        });
-      } else {
-        // login successfully
-        console.log("Logged in successfully!");
 
-        // console.log("req = ", req);
-        console.log("BEFORE");
-        console.log("req.body = ", req.body);
-        console.log("req.cookies = ", req.cookies);
-        console.log("req.session = ", req.session);
-        // console.log("res = ", res);
+      // results =  [
+      //   RowDataPacket {
+      //     manager_id: 6,
+      //     username: 'andy-01',
+      //     firstname: 'Yayen',
+      //     lastname: 'Lin',
+      //     password: '$2a$10$LSBVvNc8IU.mA9lKHHKka.vmv./MpDVax.5XZRJoxqvqqPzFZJny6',
+      //     privilege: '3',
+      //     active: '1',
+      //     createdOn: 2021-07-11T09:48:55.000Z
+      //   }
+      // ]
 
-        // TODO: create session for logged in user.
-        let sess = req.session; // a server -side key/val store
+      const dbResponse = results[0];
 
-        // if (sess.user) {
-        //   console.log("sess.user = ", sess.user);
-        //   return res.status(200).json({
-        //     auth: true,
-        //     username: req.body.username,
-        //     token: token,
-        //     profile: {
-        //       username: results[0].username,
-        //       privilege: results[0].privilege,
-        //     },
-        //     results: results,
-        //   });
-        // }
-
-        sess.user = results[0].username;
-        sess.privilege = results[0].privilege;
-        console.log("YOYOYO! session = ", sess);
-
-        // create jwt
-        const username = results[0].username;
-        const token = jwt.sign({ username: username }, process.env.JWT_SECRET, {
-          expiresIn: process.env.JWT_EXPIRES_IN,
+      if (!dbResponse)
+        return Response.sendErrorResponse({
+          res,
+          message: "Username does not exist.",
+          statusCode: 400,
         });
 
-        // cookie setting
-        const cookieOptions = {
-          // cookie expires after 90 mins from the time it is set.
-          expires: new Date(
-            Date.now() + process.env.JWT_COOKIE_EXPIRES * 60 * 1000
-          ),
-          httpOnly: true, // for security reason it's recommended to set httpOnly to true
-        };
-
-        // adds cookie to the response
-        res.cookie("Carmax168_cookie", token, cookieOptions);
-
-        console.log("YOYOYO! TOKEN: ", token);
-        console.log(
-          "YOYOYO! req.cookies.Carmax168_cookie: ",
-          req.cookies.Carmax168_cookie
-        );
-
-        console.log("AFTER");
-        console.log("req.body = ", req.body);
-        console.log("req.cookies = ", req.cookies);
-        console.log("req.session = ", req.session);
-
-        //console.log(results[0]);
-
-        // TODO: user models
-        // // get employee-of status
-        // try {
-        //   pantries = await db1.isEmployeeOf(req, res, user);
-        // } catch (e) {
-        //   console.log(e);
-        //   return res.status(500).json({
-        //     messsage: "Employee of pantries lookup failed due to server error.",
-        //   });
-        // }
-
-        // // make into array
-        // var pantriesArr = [];
-        // pantries.forEach((obj, index) => {
-        //   pantriesArr[index] = obj["pantry_id"];
-        // });
-
-        return res.status(200).json({
-          auth: true,
-          username: username,
-          token: token,
-          profile: {
-            username: results[0].username,
-            privilege: results[0].privilege,
-          },
-          results: results,
+      if (!Validation.comparePassword(dbResponse.password, password))
+        return Response.sendErrorResponse({
+          res,
+          message: "The password you provided is incorrect",
+          statusCode: 400,
         });
-      }
-    })
-    .catch((err) => {
-      // Reject case
-      console.log(err);
-      return res.status(500).json({
-        auth: false,
-        messsage: "Login failed due to server error.",
+
+      // login successfully
+      console.log("Logged in successfully!");
+      console.log("dbResponse", dbResponse);
+
+      // access token - give users access to protected resources
+      const token = Utils.generateJWT(dbResponse); // passing payload to jwt
+
+      // refresh token - allow users request new tokens
+      const refreshExpiry = moment()
+        .utc()
+        .add(3, "days")
+        .endOf("day")
+        .format("X");
+      const refreshToken = Utils.generateJWT({
+        exp: parseInt(refreshExpiry),
+        data: dbResponse.manager_id,
       });
-    });
-};
 
-exports.adminSignupAction = (req, res) => {
-  const newUser = {
-    username: req.body.username,
-    password: req.body.password,
-    privilege: req.body.privilege,
-  };
+      // add cookies to the response
+      res.cookie(process.env.JWT_ACCESS, token, accessCookieOptions);
+      res.cookie(process.env.JWT_REFRESH, refreshToken, refreshCookieOptions);
 
-  if (
-    !newUser.username ||
-    !newUser.password ||
-    newUser.username === "" ||
-    newUser.password === ""
-  ) {
-    return res.status(200).json({
-      auth: false,
-      message: "Please provide a username and password.",
-    });
-  }
+      // add refreshToken to our refreshToken obj
+      refreshTokensByID[dbResponse.manager_id] = refreshToken;
+      console.log("added to refershTokensByID: ", refreshTokensByID);
 
-  authDB
-    .adminSignup(req, res, newUser)
-    .then(async (data) => {
-      console.log("auth.controllers - signup - data = ", data);
-      console.log("auth.controllers - signup - newUser = ", newUser);
-      // create jwt
-      // const token = jwt.sign(
-      //   { username: newUser.username },
-      //   process.env.JWT_SECRET,
-      //   { expiresIn: process.env.JWT_EXPIRES_IN }
-      // );
+      // FIXME: create session for logged in user.
+      let sess = req.session;
+      sess.user_id = dbResponse.manager_id;
+      console.log("session", sess);
 
-      // // create cookie
-      // const cookieOptions = {
-      //   // cookie expires after 90 mins from the time it is set.
-      //   expires: new Date(
-      //     Date.now() + process.env.JWT_COOKIE_EXPIRES * 60 * 1000
-      //   ),
-      //   httpOnly: true,
-      // };
-
-      // // can specify any name for cookie
-      // // need to decode the token to get username
-      // res.cookie("Carmax168_cookie", token, cookieOptions);
-      // console.log("YOYOYO! TOKEN: ", token);
-
-      // get type
-      // try {
-      //   var userType = await authDB.adminGetPrivilege(req, res, newUser);
-      // } catch (error) {
-      //   console.log(error);
-      //   return res.status(500).json({
-      //     auth: false,
-      //     messsage: "User privilege lookup failed due to server error.",
-      //   });
-      // }
-      // var uType = userType[0].privilege;
-
-      // TODO: user.models
-      // get employee-of status
-      // this will always return an empty array for signup because a new user cannot immediately be an employee
-      // try {
-      //   var pantries = await db1.isEmployeeOf(req, res, newUser);
-      // } catch (err) {
-      //   console.log(err);
-      //   return res.status(500).json({
-      //     messsage: "Employee of pantries lookup failed due to server error.",
-      //   });
-      // }
-
-      // // make into array
-      // var pantriesArr = [];
-      // pantries.forEach((obj, index) => {
-      //   pantriesArr[index] = obj["pantry_id"];
-      // });
-
-      return res.status(200).json({
-        auth: false,
-        // username: newUser.username,
-        // token: token,
-        // profile: {
-        //   username: newUser.username,
-        //   privilege: newUser.privilege,
-        // },
-      });
-    })
-    .catch((err) => {
-      console.log(err);
-      // Duplicate username error
-      return res.status(200).json({
-        auth: false,
-        message: "Duplicate Username Error: " + err,
-      });
-    });
-};
-
-exports.adminUpdateUserAction = (req, res) => {
-  const newInfo = {
-    username: req.body.username,
-    password: req.body.password,
-    privilege: req.body.privilege,
-  };
-
-  if (
-    !newInfo.username ||
-    !newInfo.password ||
-    newInfo.username === "" ||
-    newInfo.password === ""
-  ) {
-    return res.status(200).json({
-      auth: true,
-      message: "Please provide a username and password.",
-    });
-  }
-
-  authDB
-    .adminUpdate(req, res, newInfo)
-    .then(async (data) => {
-      console.log("auth.controllers - update - data = ", data);
-      console.log("auth.controllers - update - newInfo = ", newInfo);
-      // create token and insert cookie
-      const token = jwt.sign(
-        { username: newInfo.username },
-        process.env.JWT_SECRET,
-        { expiresIn: process.env.JWT_EXPIRES_IN }
-      );
-
-      // create cookie
-      const cookieOptions = {
-        // cookie expires after 90 mins from the time it is set.
-        expires: new Date(
-          Date.now() + process.env.JWT_COOKIE_EXPIRES * 60 * 1000
-        ),
-        httpOnly: true,
-      };
-
-      // can specify any name for cookie
-      // need to decode the token to get username
-      res.cookie("Carmax168_cookie", token, cookieOptions);
-      console.log("YOYOYO! TOKEN: ", token);
-
-      // get type
-      // try {
-      //   var userType = await authDB.adminGetPrivilege(req, res, newInfo);
-      // } catch (error) {
-      //   console.log(error);
-      //   return res.status(500).json({
-      //     auth: true,
-      //     messsage: "User privilege lookup failed due to server error.",
-      //   });
-      // }
-      // var uType = userType[0].privilege;
-
-      // // get employee-of status
-      // // this will always return an empty array for signup because a new user cannot immediately be an employee
-      // try {
-      //   var pantries = await db1.isEmployeeOf(req, res, newInfo);
-      // } catch (err) {
-      //   console.log(err);
-      //   return res.status(500).json({
-      //     messsage: "Employee of pantries lookup failed due to server error.",
-      //   });
-      // }
-
-      // // make into array
-      // var pantriesArr = [];
-      // pantries.forEach((obj, index) => {
-      //   pantriesArr[index] = obj["pantry_id"];
-      // });
-
-      return res.status(200).json({
-        auth: true,
-        username: newInfo.username,
-        token: token,
-        profile: {
-          username: newInfo.username,
-          privilege: newInfo.privilege,
+      delete dbResponse.password; // removed password before return
+      return Response.sendResponse({
+        res,
+        responseBody: {
+          user: dbResponse,
+          token,
+          refresh: refreshToken,
         },
+        message: "Login successful.",
       });
     })
     .catch((err) => {
       console.log(err);
-      return res.status(500).json({
-        auth: true,
-        message: "Failed to update user due to server error.",
+      return Response.sendErrorResponse({
+        res,
+        message: err,
+        statusCode: 500,
       });
     });
 };
 
-exports.adminDeleteUserAction = (req, res) => {
-  authDB
-    .adminDelete(req, res)
-    .then((data) => {
-      //set cookie to user logged out
-      console.log("auth.controllers - delete - data = ", data);
-      res.cookie("Carmax168_cookie", "logout", {
-        // cookie expires after 2 sec from the time it is set.
-        expires: new Date(Date.now() + 2 * 1000),
-        httpOnly: true,
-      });
+/**
+ * fetch logged in user info
+ *
+ * @param {*} req
+ * @param {*} res
+ * @returns current logged in user info
+ */
+exports.me = async (req, res) => {
+  const { user, token, tokenExp, toRefresh } = res;
 
-      return res.status(200).json({
-        auth: true,
-        message: "User account deleted.",
-      });
-    })
-    .catch((err) => {
-      return res.status(500).json({
-        auth: true,
-        message: "Failed to delete user due to server error.",
-      });
+  console.log(res.user);
+  delete res.user.iat;
+  delete res.user.exp;
+  delete res.user.aud;
+  delete res.user.iss;
+  delete res.user.sub;
+  delete res.user.password;
+  try {
+    return Response.sendResponse({
+      res,
+      message: "User details successfully fetched",
+      responseBody: {
+        user: user,
+        token: token,
+        refresh: refreshTokensByID[user.manager_id],
+        tokenExp: tokenExp,
+        toRefresh: toRefresh,
+      },
     });
+  } catch (error) {
+    console.log(error);
+    return Response.sendErrorResponse({
+      res,
+      message: "Unable to fetch currently logged in user information.",
+      statusCode: 400,
+    });
+  }
 };
 
-// TODO: session is not 'destroyed' and cookie is not 'cleared';
+/**
+ * if access token has expired, renew the access token and call next();
+ * if not, call next(); directly.
+ *
+ * @param {*} req
+ * @param {*} res
+ * @param {*} next
+ */
+exports.refreshTokenAction = async (req, res) => {
+  // console.log("----------------------------------------- req");
+  // console.log(req.token);
+  // console.log(req.user);
+  // console.log(req.sessionID);
+  // console.log("----------------------------------------- res");
+  // console.log(res.token);
+  // console.log(res.user);
+
+  const { user } = req.body;
+
+  // console.log("res", res.user.manager_id);
+  const refresh = refreshTokensByID[user.manager_id];
+
+  // FIXME: refresh turns undefined sometimes
+  console.log("refresh", refresh);
+  // if refresh token missing
+  if (!refresh)
+    return Response.sendErrorResponse({
+      res,
+      message: "No refresh token provided.",
+      statusCode: 403,
+    });
+
+  // if refresh token expires
+  if (refresh) {
+    try {
+      const decoded = Utils.verifyJWT(refresh);
+      // {
+      //   exp: 1626825599,
+      //   data: 6,
+      //   iat: 1626500973,
+      //   aud: 'jwt-node',
+      //   iss: 'jwt-node',
+      //   sub: 'jwt-node'
+      // }
+      const exp = decoded.exp || null;
+      const now = new Date(Date.now()).getTime() / 1000;
+
+      // if no exp in decoded or id doesn't match
+      if (!exp || decoded.data !== user.manager_id)
+        return Response.sendErrorResponse({
+          res,
+          message: "Invalid refresh token.",
+          statusCode: 403,
+        });
+
+      console.log("Got here - 1");
+
+      // if refresh token expires
+      if (now > exp)
+        return Response.sendErrorResponse({
+          res,
+          message: "Refresh token expired, please log back in again.",
+          statusCode: 403,
+        });
+
+      console.log("Got here - 2");
+
+      // generate new access token using logged in user's info
+      const newToken = Utils.generateJWT(user);
+
+      // clear the old cookie
+      res.clearCookie(process.env.JWT_ACCESS);
+      // add the new cookie to response
+      res.cookie(process.env.JWT_ACCESS, newToken, accessCookieOptions);
+
+      console.log("Got here - 3");
+      console.log(user); // FIXME: undefined?
+
+      return Response.sendResponse({
+        res,
+        message: "Token renewed.",
+        responseBody: {
+          user: user,
+          token: newToken,
+          refresh: refresh,
+        },
+        statusCode: 200,
+      });
+    } catch (err) {
+      console.log(err);
+      return Response.sendErrorResponse({
+        res,
+        message: err,
+        statusCode: 500,
+      });
+    }
+  }
+};
+
+/**
+ * Admin logout action
+ *
+ * @param {*} req
+ * @param {*} res
+ * @returns
+ */
 exports.adminLogoutAction = (req, res) => {
-  console.log("auth.controllers - logout");
-  res.cookie("Carmax168_cookie", "logout", {
+  console.log("LOGGIN OUT!!");
+
+  // replace cookie with logout cookie
+  res.cookie(process.env.JWT_ACCESS, "logout", {
     // cookie expires after 2 sec from the time it is set.
     expires: new Date(Date.now() + 2 * 1000),
     httpOnly: true,
+    sameSite: true,
   });
-  console.log("req.session before destroyed: ", req.session);
 
-  // session destroy set current session to undefined
+  // replace refresh cookie with logout cookie
+  res.cookie(process.env.JWT_REFRESH, "logout", {
+    // cookie expires after 2 sec from the time it is set.
+    expires: new Date(Date.now() + 2 * 1000),
+    httpOnly: true,
+    sameSite: true,
+  });
+
+  // destroy session
   req.session.destroy((err) => {
-    if (err) {
-      return res.status(200).json({
-        auth: true,
-        message: "Failed to destroy session during logout",
+    if (err)
+      return Response.sendErrorResponse({
+        res,
+        message: "Something happened while destroying the session.",
+        statusCode: 400,
       });
-    }
   });
-  console.log("session destroyed");
-  console.log("req.session after destroyed: ", req.session);
-  return res.status(200).json({
-    auth: false,
-    message: "Successfully logged out!",
-  });
-};
 
-// TEST: remove
-exports.adminIsAuth = (req, res) => {
-  console.log("------------------- req -------------------");
-  console.log("req.sessionID", req.sessionID);
-  console.log("req.session.cookie", req.session.cookie);
-  console.log("req.session.user", req.session.user);
-  console.log("req.session.privilege", req.session.privilege);
-  console.log("req.cookies", req.cookies);
-
-  return res.status(200).json({
-    auth: true,
-    message: "HI, this is adminIsAuth",
-  });
-};
-
-exports.adminIsLoggedIn = (req, res) => {
-  console.log("------------------- req -------------------");
-  console.log(req);
-  console.log("req.sessionID", req.sessionID);
-  console.log("req.cookies", req.cookies);
-  console.log("req.body", req.body);
-  if (
-    req.sessionID // &&
-    // req.cookies.Carmax168_cookie &&
-    // req.cookies.Carmax168_sid
-  ) {
-    console.log("user is logged in.");
-    return res.status(200).json({
-      auth: true,
-      username: req.session.user,
-      token: req.cookies.Carmax168_cookie,
-      profile: {
-        username: req.session.user,
-        privilege: req.session.privilege,
-      },
-      message: "User is logged in.",
+  try {
+    return Response.sendResponse({
+      res,
+      message: "Successfully logged out.",
+      statusCode: 200,
     });
-  } else {
-    console.log("User is not logged in.");
-    return res.status(200).json({
-      auth: false,
-      message: "User is not logged in.",
+  } catch (error) {
+    console.log(errer);
+    return Response.sendErrorResponse({
+      res,
+      message: "Unable to log out.",
+      statusCode: 400,
     });
   }
 };

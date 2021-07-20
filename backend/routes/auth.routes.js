@@ -3,38 +3,37 @@ const router = express.Router();
 
 const {
   adminLoginAction,
-  adminLogoutAction,
   adminSignupAction,
-  adminUpdateUserAction,
-  adminDeleteUserAction,
-  adminIsAuth, // TEST: remove
-  adminIsLoggedIn,
+  me,
+  adminLogoutAction,
+  refreshTokenAction,
 } = require("../controllers/auth.controllers.js");
 
-const {
-  verifyAndGetUserInfo,
-  requireLogin,
-} = require("../middleware/auth.middleware");
+const { decodeHeader, requireLogin } = require("../middleware/auth.middleware");
 
-router.route("/isAuth").get(verifyAndGetUserInfo, requireLogin, adminIsAuth); // TEST: remove
+const { checkDuplicateUser } = require("../helpers/validation");
 
-router.route("/isLoggedIn").get(adminIsLoggedIn);
+// signup
+router.route("/adminSignup").post(checkDuplicateUser, adminSignupAction);
 
 // login
-router.route("/login").post(adminLoginAction); // add a .get(adminStayLoggedIn) middleware?
+router.route("/adminLogin").post(adminLoginAction);
+
+// fetch logged in user info - keeps user logged in on page refresh
+router.route("/me").get(decodeHeader, me);
+
+// refresh user's token if the user's access token almost expired
+router.route("/refreshToken").post(refreshTokenAction);
 
 // logout
 router
-  .route("/logout")
-  .post(verifyAndGetUserInfo, requireLogin, adminLogoutAction);
+  .route("/adminLogout")
+  .post(decodeHeader, requireLogin, adminLogoutAction);
+// router
+//   .route("/adminLogout")
+//   .post(verifyAndGetUserInfo, requireLogin, adminLogoutAction);
 
-// sign up
-router.route("/signup").post(adminSignupAction);
-
-// update and delete users
-router
-  .route("/:username")
-  .put(verifyAndGetUserInfo, requireLogin, adminUpdateUserAction)
-  .delete(verifyAndGetUserInfo, requireLogin, adminDeleteUserAction);
+// verify token
+// router.route(`/verifyToken?token=:token`).get(verifyAndGetUserInfo);
 
 module.exports = router; // We need this at the end of every route file

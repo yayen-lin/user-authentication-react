@@ -29,14 +29,15 @@ class Navigation extends Component {
     this.state = {
       navbarAdmin: [
         "Home",
-        "About",
-        "Contact",
-        "Profile",
-        "Help",
-        "Staff Manager",
+        // "About",
+        // "Contact",
+        "Dashboard",
+        // "Help",
+        // "Staff Manager",
         "Logout",
       ], // + manage users, + ?
-      navbarUser: ["Home", "About", "Contact", "Help", "Login"],
+      // navbarUser: ["Home", "About", "Contact", "Help", "Login"],
+      navbarUser: ["Home", "Login"],
     };
   }
 
@@ -106,7 +107,7 @@ class Navigation extends Component {
   getRoute(content) {
     switch (content) {
       case "Logout":
-        return "/logout";
+        return "/adminLogout";
       case "Login":
         return "/login-and-reg";
       case "Help":
@@ -117,6 +118,8 @@ class Navigation extends Component {
         return "/about";
       case "Contact":
         return "/contact";
+      case "Dashboard":
+        return "/dashboard";
       case "Profile":
         return "/profile/:" + this.props.username;
       case "Staff Manager":
@@ -157,7 +160,7 @@ class Navigation extends Component {
   }
 
   render() {
-    let navbarContent = this.props.isLoggedIn()
+    let navbarContent = this.props.isLoggedIn
       ? this.state.navbarAdmin
       : this.state.navbarUser;
 

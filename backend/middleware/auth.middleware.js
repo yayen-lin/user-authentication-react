@@ -1,7 +1,7 @@
 /**
  * middleware is run on the server-side.
  * - It is run before any of the code in the routes to verify that the user
- *   making the request is actually authorized
+ *   making the request is authorized
  *
  * @version 1.0.0
  * @author [Yayen Lin](https://github.com/yayen-lin)
@@ -10,119 +10,371 @@
 
 // TODO: remove debugging console.log
 
+const jwt = require("jsonwebtoken");
+const Response = require("../helpers/response");
+const Utils = require("../helpers/utils");
 const { promisify } = require("util");
 const { execQuery } = require("../query");
-// const authDB = require("../models/user.models");
 
-/*
- * Helper middleware function that verifies if a user is truly logged in.
- * Sets req.user to the user; otherwise, user will be null.
+/**
+ *
+ * @returns
  */
-exports.verifyAndGetUserInfo = async (req, res, next) => {
-  // console.log("auth.middleware - verifyAndGetUserInfo");
-  console.log(
-    "auth.middleware - verifyAndGetUserInfo - req.cookies = ",
-    req.cookies
-  );
-  console.log(
-    "auth.middleware - verifyAndGetUserInfo - req.cookies.Carmax168_cookie = ",
-    req.cookies.Carmax168_cookie
-  );
-  const decoded = await promisify(jwt.verify)(
-    req.cookies.Carmax168_cookie,
-    process.env.JWT_SECRET
-  );
-  console.log(
-    "auth.middleware - verifyAndGetUserInfo - decoded(req.cookies.Carmax168_cookie) = ",
-    decoded
-  );
-  if (req.cookies.Carmax168_cookie) {
-    // async returns a promise after the await
-    // verify is from jwt
-    // 1. verify the token
-    const decoded = await promisify(jwt.verify)(
-      req.cookies.Carmax168_cookie,
-      process.env.JWT_SECRET
-    );
-    console.log(decoded);
+exports.authenticate = () => {
+  console.log("got here");
+  return (req, res, next) => {
+    try {
+      let token =
+        req.headers["x-access-token"] ||
+        req.headers.authorization ||
+        req.body.token ||
+        req.cookies[process.env.JWT_ACCESS];
+      console.log(token, "------------------");
 
-    // 2. check if the user still exists and get user info from DB
-    const query = `SELECT * FROM users WHERE username = ?;`;
-    execQuery("select", query, [decoded.username])
-      .then(async (result) => {
-        if (!result) {
-          // if user doesn't exist in the database
-          req.user = null;
-          next();
-          return res.status(501).json({
-            message: "Unauthorized User Access",
-          });
-        } else {
-          // verified user
-          req.user = result[0];
-          next();
-        }
-      })
-      .catch((err) => {
-        console.log(err);
-        req.user = null;
-        return res.status(500).json({
-          message: "Server error while setting the user in middleware",
-        });
+      if (!token) throw new Error("No token provided.");
+      if (token.startsWith("Bearer ")) token = token.slice(7, token.length);
+
+      if (!token || token === "" || token === "undefined")
+        throw new Error("No token provided.");
+
+      const user = Utils.verifyJWT(token);
+
+      if (!user) throw new Error("Failed to authenticate token.");
+
+      res.user = user.data;
+      delete user.data.password;
+      res.token = token;
+      return next();
+    } catch (e) {
+      return Response.sendErrorResponse({
+        res,
+        message: "Failed to authenticate token",
+        statusCode: 401,
       });
-  } else if (req.headers["x-access-token"] || req.headers["authorization"]) {
-    let token = req.headers["x-access-token"] || req.headers["authorization"];
+    }
+  };
+};
 
-    // remove Bearer from string
-    token = token.replace(/^Bearer\s+/, "");
+/**
+ * decode header middleware
+ *
+ * @param {*} req
+ * @param {*} res
+ * @param {*} next
+ * @returns
+ */
+exports.decodeHeader = (req, res, next) => {
+  let token =
+    req.headers["x-access-token"] ||
+    req.headers.authorization ||
+    req.body.token ||
+    req.cookies[process.env.JWT_ACCESS] ||
+    null;
 
-    jwt.verify(token, process.env.JWT_SECRET, (err, decoded) => {
-      if (err) {
-        // token is not valid
-        req.user = null;
-        next();
-      } else {
-        // user is signed in, but we need to check if the username exists
-        const query = `SELECT * FROM users WHERE username = ?;`;
-        execQuery("select", query, [decoded.username])
-          .then(async (result) => {
-            if (!result) {
-              // if user doesn't exist in the database
-              req.user = null;
-              next();
-              return res.status(501).json({
-                message: "Unauthorized User Access",
-              });
-            }
-            // got login info and user is verified
-            req.user = result[0];
-            next();
-          })
-          .catch((err) => {
-            console.log(err);
-            req.user = null;
-            return res.status(500).json({ message: "Server error" });
-          });
-      }
+  // FIXME: token turns undefined sometimes
+
+  if (token && token.startsWith("Bearer "))
+    token = token.slice(7, token.length); // remove Bearer from string
+
+  // missing token
+  if (!token || token === "") {
+    return Response.sendErrorResponse({
+      res,
+      message: "No token provided",
+      statusCode: 401,
     });
-  } else {
-    // no jwt token found
-    req.user = null;
-    next();
+  }
+
+  /*
+   * Refresh token if necessary;
+   * otherwise throw error if token expired, or invalid signatire
+   */
+  try {
+    // check if access token is valid + not expired
+    const decoded = Utils.verifyJWT(token);
+
+    // if token is valid, return next();
+    if (decoded) res.user = decoded;
+    console.log(res.user);
+
+    // tokenExp: keep tracks of when the token expires
+    res.tokenExp = decoded.exp - new Date(Date.now()).getTime() / 1000;
+    console.log("res.tokenExp", res.tokenExp);
+
+    // if token expiry less than xx seconds, set toRefresh to true in the response.
+    if (res.tokenExp < process.env.JWT_REFRESH_PERIOD) res.toRefresh = true;
+    else res.toRefresh = false;
+
+    res.token = token;
+    return next();
+  } catch (err) {
+    // if err is TokenExpiredError
+    if (err.name === "TokenExpiredError") {
+      // --------------------- remove session and cookies ---------------------
+      // replace cookie with logout cookie
+      res.cookie(process.env.JWT_ACCESS, "token expired", {
+        // cookie expires after 2 sec from the time it is set.
+        expires: new Date(Date.now() + 2 * 1000),
+        httpOnly: true,
+        sameSite: true,
+      });
+
+      // replace refresh cookie with logout cookie
+      res.cookie(process.env.JWT_REFRESH, "token expired", {
+        // cookie expires after 2 sec from the time it is set.
+        expires: new Date(Date.now() + 2 * 1000),
+        httpOnly: true,
+        sameSite: true,
+      });
+
+      // destroy session
+      req.session.destroy((err) => {
+        if (err)
+          return Response.sendErrorResponse({
+            res,
+            message: "Something happened while destroying the session.",
+            statusCode: 400,
+          });
+      });
+
+      // FIXME:
+      // receive the TokenExpiredError and send a new request from the frontend
+
+      return Response.sendErrorResponse({
+        res,
+        message: "TokenExpiredError: your token has expired",
+        statusCode: 403,
+      });
+    }
+    console.log(err);
+    // something else went wrong
+    return Response.sendErrorResponse({
+      res,
+      message: "Invalid signature",
+      statusCode: 403,
+    });
   }
 };
 
+/**
+ * require login middleware
+ *
+ * @param {*} req
+ * @param {*} res
+ * @param {*} next
+ */
 exports.requireLogin = async (req, res, next) => {
   console.log("auth.middleware - requireLogin");
-  if (req.user) {
+  if (res.user) {
     next();
   } else {
-    return res.status(200).json({
+    Response.sendErrorResponse({
+      res,
       message: "You need to be signed in to perform that action.",
+      statusCode: 403,
     });
   }
 };
+
+// /**
+//  * if access token has expired, renew the access token and call next();
+//  * if not, call next(); directly.
+//  *
+//  * @param {*} req
+//  * @param {*} res
+//  * @param {*} next
+//  */
+// exports.refreshTokenAction = async (req, res, next) => {
+//   // console.log("----------------------------------------- req");
+//   // console.log(req.token);
+//   // console.log(req.user);
+//   // console.log(req.sessionID);
+//   // console.log("----------------------------------------- res");
+//   // console.log(res.token);
+//   // console.log(res.user);
+//   console.log("refresh token action~");
+
+//   const { token, refresh } = req.body;
+//   const now = new Date(Date.now()).getTime() / 1000;
+
+//   if (token) {
+//     const decoded = Utils.verifyJWT(token);
+//     const exp = decoded.exp;
+//     // if current access token has not expired
+//     if (exp > now) next();
+//     // current access token has expired
+//     else {
+//       // if refresh token missing
+//       if (!refresh)
+//         return Response.sendErrorResponse({
+//           res,
+//           message: "No refresh token provided.",
+//           statusCode: 403,
+//         });
+
+//       // if refresh token expires
+//       if (refresh) {
+//         try {
+//           const decoded = Utils.verifyJWT(refresh);
+//           // {
+//           //   exp: 1626825599,
+//           //   data: 6,
+//           //   iat: 1626500973,
+//           //   aud: 'jwt-node',
+//           //   iss: 'jwt-node',
+//           //   sub: 'jwt-node'
+//           // }
+//           const exp = decoded.exp || null;
+
+//           // if no exp in decoded or id doesn't match
+//           if (!exp || decoded.data !== res.user.manager_id)
+//             return Response.sendErrorResponse({
+//               res,
+//               message: "Invalid refresh token.",
+//               statusCode: 403,
+//             });
+
+//           // if refresh token expires
+//           if (now > exp)
+//             return Response.sendErrorResponse({
+//               res,
+//               message: "Refresh token expired, please log back in again.",
+//               statusCode: 403,
+//             });
+
+//           // generate new access token using logged in user's info
+//           delete res.user.iat;
+//           delete res.user.exp;
+//           delete res.user.aud;
+//           delete res.user.iss;
+//           delete res.user.sub;
+//           const newToken = Utils.generateJWT(res.user);
+
+//           console.log("Token renewed.");
+//           console.log(token, "------------------");
+//           res.token = newToken;
+//           next();
+
+//           // delete res.user.password; // removed password before return
+//           // return Response.sendResponse({
+//           //   res,
+//           //   message: "Token renewed.",
+//           //   responseBody: {
+//           //     user: res.user,
+//           //     token: newToken,
+//           //     refresh: refresh,
+//           //   },
+//           //   statusCode: 200,
+//           // });
+//         } catch (err) {
+//           return Response.sendErrorResponse({
+//             res,
+//             message: err,
+//             statusCode: 500,
+//           });
+//         }
+//       }
+//     }
+//   }
+// };
 
 exports.verifyUsername = async (req, res, next) => {};
 
 exports.getUserType = async (req, res, next) => {};
+
+// =======================================================================
+/*
+ * Helper middleware function that verifies if a user is truly logged in.
+ * Sets req.user to the user; otherwise, user will be null.
+ */
+// exports.verifyAndGetUserInfo = async (req, res, next) => {
+//   if (req.cookies.Carmax168_cookie) {
+//     // async returns a promise after the await
+//     // verify is from jwt
+//     // 1. verify the token
+//     const decoded = await promisify(jwt.verify)(
+//       req.cookies.Carmax168_cookie,
+//       process.env.JWT_SECRET
+//     );
+//     console.log("decoded jwt: ", decoded);
+
+//     // 2. check if the user still exists and get user info from DB
+//     const query = `SELECT * FROM users WHERE username = ?;`;
+//     execQuery("select", query, [decoded.username])
+//       .then(async (result) => {
+//         if (!result) {
+//           // if user doesn't exist in the database
+//           req.user = null;
+//           next();
+//           return Response.sendErrorResponse({
+//             res,
+//             message: "Unauthorized User Access",
+//             statusCode: 501,
+//           });
+//         } else {
+//           // user is verified
+//           // req.user = result[0];
+//           res.user = result[0];
+//           next();
+//         }
+//       })
+//       .catch((err) => {
+//         console.log(err);
+//         req.user = null;
+//         return res.status(500).json({
+//           message: "Server error while setting the user in middleware",
+//         });
+//       });
+//   } else if (
+//     req.headers["x-access-token"] ||
+//     req.headers["authorization"] ||
+//     req.body.token
+//   ) {
+//     let token =
+//       req.headers["x-access-token"] ||
+//       req.headers["authorization"] ||
+//       req.body.token;
+
+//     if (!token) throw new Error("No token provided.");
+
+//     // remove Bearer from string
+//     if (token.startsWith("Bearer ")) token = token.slice(7, token.length);
+
+//     if (!token || token === "" || token === "undefined")
+//       throw new Error("No token provided.");
+
+//     jwt.verify(token, process.env.JWT_SECRET, (err, decoded) => {
+//       if (err) {
+//         // token is not valid
+//         req.user = null;
+//         next();
+//       } else {
+//         // user is signed in, but we need to check if the username exists
+//         const query = `SELECT * FROM users WHERE username = ?;`;
+//         execQuery("select", query, [decoded.username])
+//           .then(async (result) => {
+//             if (!result) {
+//               // if user doesn't exist in the database
+//               req.user = null;
+//               next();
+//               return res.status(501).json({
+//                 message: "Unauthorized User Access",
+//               });
+//             }
+//             // got login info and user is verified
+//             req.user = result[0];
+//             next();
+//           })
+//           .catch((err) => {
+//             console.log(err);
+//             req.user = null;
+//             return res.status(500).json({ message: "Server error" });
+//           });
+//       }
+//     });
+//   } else {
+//     // no jwt token found
+//     req.user = null;
+//     next();
+//   }
+// };

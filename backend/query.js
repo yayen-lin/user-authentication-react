@@ -37,7 +37,7 @@ function release(conn) {
 }
 
 /**
- * Defines executing query and exports
+ * Defines executing query
  */
 exports.execQuery = (
   type,
@@ -66,17 +66,17 @@ exports.execQuery = (
           });
 
         conn.query(query, val, async (error, results) => {
-          // always release the connection back
+          // always release the connection back once get the results/error back
           release(conn);
 
-          // failure
+          // on failure
           if (error) {
             console.log("Syntax error in query!");
             console.log(error);
             return reject({ err: error, failureMsg: failure });
           }
-          // success
-          else return resolve(results);
+          // on success
+          return resolve(results);
         });
       }
     });

@@ -10,7 +10,7 @@
     "start": "node server.js",
     "dev": "nodemon server.js",
     "build": "cd frontend && npm run build",
-    "i-frontend": "cd frontend && npm install",
+    "install-all": "npm install && cd frontend && npm install",
     "test": "echo \"Error: no test specified\" && exit 1"
   },
   "repository": {
@@ -26,6 +26,7 @@
   "homepage": "https://github.com/yayen-lin/carmax168#readme",
   "dependencies": {
     "bcrypt": "^5.0.1",
+    "bcryptjs": "^2.4.3",
     "body-parser": "^1.19.0",
     "bootstrap": "^4.6.0",
     "cookie-parser": "^1.4.5",
@@ -34,19 +35,18 @@
     "express": "^4.17.1",
     "express-mysql-session": "^2.1.6",
     "express-session": "^1.17.2",
-    "history": "^5.0.0",
+    "file-system": "^2.2.2",
+    "joi": "^17.4.1",
     "jsonwebtoken": "^8.5.1",
     "mdb-react-ui-kit": "git+https://oauth2:_Xem5r2nnu2yZCTMoZQN@git.mdbootstrap.com/mdb/react/mdb5/prd/mdb5-react-ui-kit-pro-essential",
+    "moment": "^2.29.1",
     "mysql": "^2.18.1",
     "nodemon": "^2.0.7",
     "react-bootstrap": "^1.6.1",
     "react-icons": "^4.2.0",
-    "react-redux": "^7.2.4",
     "react-router-bootstrap": "^0.25.0",
     "react-router-dom": "^5.2.0",
     "react-toastify": "^7.0.4",
-    "redux": "^4.1.0",
-    "redux-thunk": "^2.3.0",
-    "rxjs": "^7.1.0"
+    "utils-extend": "^1.0.8"
   }
 }

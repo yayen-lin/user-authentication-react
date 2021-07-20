@@ -1,11 +1,19 @@
 # npm dependencies
 node_modules/
 
+# env var
 .env
+.env.local
 
-# mac
+# misc
 .DS_Store
 
 # git
 .git
 
+# api testing (katalon studio)
+carmax168-api/
+
+# ssh-keygen for encrypting jwt
+private.key
+public.key

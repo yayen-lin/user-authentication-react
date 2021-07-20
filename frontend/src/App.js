@@ -10,86 +10,116 @@ import {
   // Link,
   Redirect,
 } from "react-router-dom";
-// import { history } from "./_helpers/history";
-// import { PrivateRoute } from "./_components/PrivateRoute";
 
-// service
+// service and helpers
 import AuthService from "./_services/auth.service";
+import PrivateRoute from "./_helpers/PrivateRoute";
+import PublicRoute from "./_helpers/PublicRoute";
 
 // imports for action notification
 // reference: https://fkhadra.github.io/react-toastify/introduction
 import { ToastContainer, toast } from "react-toastify";
 import "react-toastify/dist/ReactToastify.css";
 
-// react-redux
-import store from "./store";
-import { Provider } from "react-redux";
-
 // auth
 import LoginAndRegView from "./_components/auth/LoginAndRegView";
-import LoginView from "./_components/auth/LoginView";
-import SignupView from "./_components/auth/SignupView";
 
 // admin
-import Profile from "./_components/admin/Profile";
-import StaffManager from "./_components/admin/StaffManager";
+import Dashboard from "./_components/admin/Dashboard";
 
 // guest views
 import Home from "./_components/guestView/Home";
-import Help from "./_components/guestView/Help";
-import About from "./_components/guestView/About";
-import Contact from "./_components/guestView/Contact";
-import GuestForm from "./_components/guestView/GuestForm";
 import Navigation from "./_components/guestView/Navigation";
 
 class App extends Component {
   constructor(props) {
     super(props);
     this.state = {
-      currentUser: "",
-      username: "",
+      currentUser: {},
+      token: "",
+      refresh: "",
+      isLoggedIn: false,
+      timeToRefresh: null,
+
+      // to renew access token (in seconds)
+      browserRefreshPeriod: 300,
     };
   }
 
   componentDidMount() {
-    this.getCurrentUser();
+    // Call this function so that it fetch first time right after mounting the component
+    this.getInfo();
+
+    // set Interval
+    this.interval = setInterval(
+      () => this.getInfo(),
+      this.state.browserRefreshPeriod * 1000
+    );
   }
 
-  // componentWillUnmount() {
-  //   AuthService.currentUser.unsubscribe(this);
-  // }
+  componentWillUnmount() {
+    // Clear the interval right before component unmount
+    clearInterval(this.interval);
+  }
+
+  /**
+   * Get the user info and set isLoggedIn to true if a cookie with token is found in the cookies storage;
+   * otherwise set isLoggedIn to false.
+   *
+   * refresh user's access token if the token is about to expire.
+   */
+  getInfo() {
+    // console.log("GET INFO, this state", this.state);
+    // console.log("GET INFO, token", this.state.token); // FIXME: this.state.token is undefined ...
+    AuthService.getUserInfo()
+      .then((response) => {
+        console.log(response);
+        this.setToLoggedIn(response.data);
+
+        // if response.toRefresh is true, then it's time to refresh our access token.
+        if (response.data.toRefresh) {
+          console.log("Token about to get refreshed!");
+          AuthService.refreshToken(this.state.currentUser).then((response) => {
+            console.log(response);
+            console.log("Token has refreshed!");
+          });
+        }
+      })
+      .catch((error) => {
+        console.log(error);
+        this.setState({
+          currentUser: "",
+          token: "",
+          refresh: "",
+          isLoggedIn: false,
+        });
+      });
+  }
 
   /**
    * Set logged in user info to state
    *
-   * @param {*} resData: response from the server
+   * @param {*} response: 'response.data' from the server
    */
-  setToLoggedIn(resData) {
-    if (resData)
-      this.setState({ currentUser: resData, username: resData.username });
+  setToLoggedIn(response) {
+    if (response)
+      this.setState({
+        currentUser: response.user,
+        token: response.token,
+        refresh: response.refresh,
+        isLoggedIn: true,
+      });
   }
 
   /**
    * Clear our logged out user info to the state
    */
   setToLoggedOut() {
-    this.setState({ currentUser: "", username: "" });
-  }
-
-  /**
-   * get the current logged in user info from the server and set logged in user info to the state
-   */
-  getCurrentUser() {
-    AuthService.currentUser.subscribe((x) => {
-      let resData = null;
-      try {
-        resData = JSON.parse(x);
-      } catch (e) {
-        resData = x;
-      }
-
-      // console.log("resData = ", resData);
-      this.setToLoggedIn(resData);
+    this.setState({
+      currentUser: "",
+      token: "",
+      refresh: "",
+      isLoggedIn: false,
     });
   }
 
@@ -108,18 +138,29 @@ class App extends Component {
   // - can do simple edition to the site (e.g. update site info)
   isAdmin() {
     if (this.isLoggedIn())
-      return this.state.currentUser.profile.privilege.toString() === "1";
+      return this.state.currentUser.privilege.toString() === "1";
+    return false;
+  }
+
+  // Vice Admin (loggedIn = true)
+  // - the person that has higher authority
+  // - privilege is set to 2
+  // - has access to manage site managers and admins
+  // - can do simple edition to the site (e.g. update site info)
+  isAdmin() {
+    if (this.isLoggedIn())
+      return this.state.currentUser.privilege.toString() === "2";
     return false;
   }
 
   // Manager (loggedIn = true)
   // - a person that manage the site
-  // - privilege is set to 0
+  // - privilege is set to 3
   // - has no access to manage site managers and admins
   // - can do simple edition to the site (e.g. update site info)
   isManager() {
     if (this.isLoggedIn())
-      return this.state.currentUser.profile.privilege.toString() === "0";
+      return this.state.currentUser.privilege.toString() === "3";
     return false;
   }
 
@@ -145,10 +186,6 @@ class App extends Component {
         return -1;
       } else {
         console.log(response);
-        console.log(user);
-        // this.setUsername(response.username);
-        // this.setToken(response.token);
-        // this.setProfile(response.profile);
 
         // We only need to import toast in other components
         // if we want to make a notification there.
@@ -169,19 +206,13 @@ class App extends Component {
   async login(user) {
     // console.log("App.js - login - store.getState() = ", store.getState());
     return AuthService.login(user).then((response) => {
-      if (response.message) {
+      if (!response.status) {
         // When the API returns `message`, that means the login has failed
         toast.error(response.message);
         return -1;
       } else {
         console.log(response);
-        // console.log(user);
-        this.setToLoggedIn(response);
-        // this.setToLoginStatus(
-        //   response.username,
-        //   response.token,
-        //   response.profile
-        // );
+        this.setToLoggedIn(response.data);
 
         // We only need to import toast in other components
         // if we want to make a notification there.
@@ -192,20 +223,9 @@ class App extends Component {
     });
   }
 
-  async isAuth(user, token) {
-    return AuthService.isAuth(user, token).then((response) => {
-      if (response.error) {
-        console.log("AN ERROR OCCURRED WHILE ISAUTH WAS CALLED");
-        toast.error(response.message);
-      } else {
-        console.log(response);
-        console.log("ISAUTH WAS JUST CALLED");
-      }
-    });
-  }
-
   async logout() {
-    return AuthService.logout().then((response) => {
+    console.log("LOGGING OUT");
+    return AuthService.logout(this.state.token).then((response) => {
       if (response.error) {
         toast.error(response.message);
       } else {
@@ -221,89 +241,57 @@ class App extends Component {
   //    https://www.pluralsight.com/guides/how-to-set-react-router-default-route-redirect-to-home
   render() {
     return (
-      <Provider store={store}>
-        <div id="body-div">
-          <Router /*history={history}*/>
-            <ToastContainer
-              position="top-right"
-              autoClose={3000} // set to 3 sec
-              hideProgressBar={false}
-              newestOnTop={false}
-              closeOnClick
-              rtl={false}
-              pauseOnFocusLoss
-              draggable
-              pauseOnHover
+      <div id="body-div">
+        <Router /*history={history}*/>
+          <ToastContainer
+            position="top-right"
+            autoClose={1000} // set to 1 sec
+            hideProgressBar={false}
+            newestOnTop={false}
+            closeOnClick
+            rtl={false}
+            pauseOnFocusLoss
+            draggable
+            pauseOnHover
+          />
+          <div>
+            <Navigation
+              isLoggedIn={this.state.isLoggedIn}
+              logout={() => this.logout()}
+              isAdmin={() => this.isAdmin()}
+              isManager={() => this.isManager()}
             />
-            <div>
-              <Navigation
-                username={this.state.username}
-                isLoggedIn={() => this.isLoggedIn()}
-                logout={() => this.logout()}
-                isAdmin={() => this.isAdmin()}
-                isManager={() => this.isManager()}
-              />
-              <Switch id="body-switch">
-                <Route exact path="/home">
-                  <Home />
-                </Route>
-                <Route exact path="/help">
-                  <Help />
-                </Route>
-                <Route exact path="/form">
-                  <GuestForm />
-                </Route>
-                <Route exact path="/about">
-                  <About />
-                </Route>
-                <Route exact path="/signup">
-                  <SignupView />
-                </Route>
-                <Route exact path="/login">
-                  <LoginView />
-                </Route>
-                <Route exact path="/login-and-reg">
-                  <LoginAndRegView
-                    login={(user) => this.login(user)}
-                    signup={(user) => this.signup(user)}
-                    isLoggedIn={() => this.isLoggedIn()}
-                  />
-                </Route>
-                <Route exact path="/contact">
-                  <Contact />
-                </Route>
-                <Route exact path={"/profile/:" + this.state.username}>
-                  <Profile
-                    currentUser={this.state.currentUser}
-                    isLoggedIn={() => this.isLoggedIn()}
-                    isAuth={(user, token) => this.isAuth(user, token)}
-                  />
-                </Route>
-                <Route exact path={"/staff-manager/:" + this.state.username}>
-                  <StaffManager
-                    currentUser={this.state.currentUser}
-                    isAdmin={() => this.isAdmin()}
-                    isLoggedIn={() => this.isLoggedIn()}
-                  />
-                </Route>
+            <Switch id="body-switch">
+              <Route exact path="/home">
+                <Home token={this.state.token} />
+              </Route>
+              <PublicRoute exact path="/login-and-reg" token={this.state.token}>
+                <LoginAndRegView
+                  login={(user) => this.login(user)}
+                  signup={(user) => this.signup(user)}
+                  isLoggedIn={() => this.isLoggedIn()}
+                />
+              </PublicRoute>
+              <PrivateRoute exact path="/dashboard" token={this.state.token}>
+                <Dashboard currentUser={this.state.currentUser} />
+              </PrivateRoute>
 
-                {/* Redirect to home page */}
-                <Route exact path="/">
-                  <Redirect to="/home" />
-                </Route>
-                {/* Redirect logout to home page */}
-                <Route exact path="/logout">
-                  <Redirect push to="/home" />
-                </Route>
-                {/* 404 Not Found */}
-                <Route path="*">
-                  <div>404 Not Found</div>
-                </Route>
-              </Switch>
-            </div>
-          </Router>
-        </div>
-      </Provider>
+              {/* Redirect to home page */}
+              <Route exact path="/">
+                <Redirect to="/home" />
+              </Route>
+              {/* Redirect logout to home page */}
+              <Route exact path="/adminLogout">
+                <Redirect push to="/home" />
+              </Route>
+              {/* 404 Not Found */}
+              <Route path="*">
+                <div>404 Not Found</div>
+              </Route>
+            </Switch>
+          </div>
+        </Router>
+      </div>
     );
   }
 }
