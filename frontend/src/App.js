@@ -10,11 +10,11 @@ import {
   // Link,
   Redirect,
 } from "react-router-dom";
-// import { history } from "./_helpers/history";
-// import { PrivateRoute } from "./_components/PrivateRoute";
 
 // service and helpers
 import AuthService from "./_services/auth.service";
+import PrivateRoute from "./_helpers/PrivateRoute";
+import PublicRoute from "./_helpers/PublicRoute";
 
 // imports for action notification
 // reference: https://fkhadra.github.io/react-toastify/introduction
@@ -30,8 +30,6 @@ import Dashboard from "./_components/admin/Dashboard";
 // guest views
 import Home from "./_components/guestView/Home";
 import Navigation from "./_components/guestView/Navigation";
-import cookieParser from "cookie-parser";
-import { Cookie } from "express-session";
 
 class App extends Component {
   constructor(props) {
@@ -51,8 +49,6 @@ class App extends Component {
   componentDidMount() {
     // Call this function so that it fetch first time right after mounting the component
     this.getInfo();
-
-    console.log(this.state);
 
     // set Interval
     this.interval = setInterval(
@@ -78,14 +74,7 @@ class App extends Component {
     AuthService.getUserInfo()
       .then((response) => {
         console.log(response);
-        // this.setState({
-        //   currentUser: response.data,
-        //   token: response.data.token,
-        //   refresh: response.data.refresh,
-        //   isLoggedIn: true,
-        // });
         this.setToLoggedIn(response.data);
-        console.log(response.data);
 
         // if response.toRefresh is true, then it's time to refresh our access token.
         if (response.data.toRefresh) {
@@ -98,23 +87,13 @@ class App extends Component {
       })
       .catch((error) => {
         console.log(error);
-        // const err = error.data || null;
-        // if (err !== null && err.message.startsWith("TokenExpiredError")) {
-        //   // TODO: call refresh token
-        //   console.log(err);
-        //   AuthService.refreshToken(this.state.currentUser, this.state.refresh);
-        // } else {
-        // remove all cookies if token expired
         this.setState({
           currentUser: "",
           token: "",
           refresh: "",
           isLoggedIn: false,
         });
-        // }
       });
-    console.log("GET INFO, this state", this.state);
-    console.log("GET INFO, token", this.state.token);
   }
 
   /**
@@ -130,7 +109,6 @@ class App extends Component {
         refresh: response.refresh,
         isLoggedIn: true,
       });
-    console.log("SET TO LOGIN, ", this.state);
   }
 
   /**
@@ -208,10 +186,6 @@ class App extends Component {
         return -1;
       } else {
         console.log(response);
-        console.log(user);
-        // this.setUsername(response.username);
-        // this.setToken(response.token);
-        // this.setProfile(response.profile);
 
         // We only need to import toast in other components
         // if we want to make a notification there.
@@ -289,18 +263,18 @@ class App extends Component {
             />
             <Switch id="body-switch">
               <Route exact path="/home">
-                <Home />
+                <Home token={this.state.token} />
               </Route>
-              <Route exact path="/login-and-reg">
+              <PublicRoute exact path="/login-and-reg" token={this.state.token}>
                 <LoginAndRegView
                   login={(user) => this.login(user)}
                   signup={(user) => this.signup(user)}
                   isLoggedIn={() => this.isLoggedIn()}
                 />
-              </Route>
-              <Route exact path="/dashboard">
+              </PublicRoute>
+              <PrivateRoute exact path="/dashboard" token={this.state.token}>
                 <Dashboard currentUser={this.state.currentUser} />
-              </Route>
+              </PrivateRoute>
 
               {/* Redirect to home page */}
               <Route exact path="/">

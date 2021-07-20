@@ -78,7 +78,7 @@ class Home extends Component {
       <Button
         variant="dark"
         onClick={() => {
-          console.log(document.cookie);
+          alert(this.props.token);
         }}
       >
         print token
